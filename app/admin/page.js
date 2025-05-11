@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAllProducts, updateProduct } from '@/lib/products';
+import { getAllProducts, updateProduct, createProduct } from '@/lib/products';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function AdminPage() {
@@ -10,6 +10,14 @@ export default function AdminPage() {
 	const [products, setProducts] = useState([]);
 	const [editingId, setEditingId] = useState(null);
 	const [editForm, setEditForm] = useState({ name: '', category: '', description: '', price: 0, image_url: '', stock: 0 });
+	const [newProductForm, setNewProductForm] = useState({
+		name: '',
+		category: '',
+		description: '',
+		price: 0,
+		image_url: '',
+		stock: 0
+	});
 	const router = useRouter();
 
 	useEffect(() => {
@@ -58,6 +66,37 @@ export default function AdminPage() {
 		});
 	};
 
+	const handleNewProductInputChange = (e) => {
+		const { name, value } = e.target;
+		setNewProductForm({
+			...newProductForm,
+			[name]: name === 'price' || name === 'stock' ? parseFloat(value) : value
+		});
+	};
+
+	const handleAddProduct = async (e) => {
+		e.preventDefault();
+		try {
+			const createdProduct = await createProduct(newProductForm);
+			if (createdProduct) {
+				// Refresh the product list
+				const updatedProducts = await getAllProducts();
+				setProducts(updatedProducts);
+				// Reset the form
+				setNewProductForm({
+					name: '',
+					category: '',
+					description: '',
+					price: 0,
+					image_url: '',
+					stock: 0
+				});
+			}
+		} catch (error) {
+			console.error('Error adding product:', error);
+		}
+	};
+
 	const handleSave = async (id) => {
 		try {
 			const updatedProduct = await updateProduct(id, editForm);
@@ -99,6 +138,89 @@ export default function AdminPage() {
 				>
 					Logout
 				</button>
+			</div>
+
+			<div className="mb-8 bg-white shadow-md rounded-lg p-6">
+				<h2 className="text-xl font-semibold mb-4">Add New Product</h2>
+				<form onSubmit={handleAddProduct}>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+							<input
+								type="text"
+								name="name"
+								value={newProductForm.name}
+								onChange={handleNewProductInputChange}
+								className="border rounded px-3 py-2 w-full"
+								required
+							/>
+						</div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+							<input
+								type="text"
+								name="category"
+								value={newProductForm.category}
+								onChange={handleNewProductInputChange}
+								className="border rounded px-3 py-2 w-full"
+								required
+							/>
+						</div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+							<textarea
+								name="description"
+								value={newProductForm.description}
+								onChange={handleNewProductInputChange}
+								className="border rounded px-3 py-2 w-full"
+								rows="2"
+							></textarea>
+						</div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+							<input
+								type="text"
+								name="image_url"
+								value={newProductForm.image_url}
+								onChange={handleNewProductInputChange}
+								className="border rounded px-3 py-2 w-full"
+							/>
+						</div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+							<input
+								type="number"
+								name="price"
+								value={newProductForm.price}
+								onChange={handleNewProductInputChange}
+								className="border rounded px-3 py-2 w-full"
+								step="0.01"
+								min="0"
+								required
+							/>
+						</div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+							<input
+								type="number"
+								name="stock"
+								value={newProductForm.stock}
+								onChange={handleNewProductInputChange}
+								className="border rounded px-3 py-2 w-full"
+								min="0"
+								required
+							/>
+						</div>
+					</div>
+					<div className="mt-4">
+						<button
+							type="submit"
+							className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+						>
+							Add Product
+						</button>
+					</div>
+				</form>
 			</div>
 
 			<div className="overflow-x-auto bg-white shadow-md rounded-lg">
