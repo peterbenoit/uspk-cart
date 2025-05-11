@@ -1,11 +1,22 @@
 import { getProductById } from '@/lib/products';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
+
+export async function generateMetadata({ params }) {
+	const product = await getProductById((await params).id);
+	return {
+		title: product ? product.name : 'Product Not Found',
+	};
+}
 
 export default async function ProductDetailPage({ params }) {
-	const resolvedParams = await params;
-	const id = resolvedParams.id;
+	const id = (await params).id;
 
 	const product = await getProductById(id);
+
+	if (!product) {
+		notFound();
+	}
 
 	return (
 		<div className="py-8 max-w-4xl mx-auto">

@@ -2,6 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { getAllProducts } from "@/lib/products";
 
+export const metadata = {
+	title: "Home – NextJS Commerce Template",
+};
+
 export default async function Home() {
 	const products = await getAllProducts();
 

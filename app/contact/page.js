@@ -2,6 +2,8 @@
 
 import { useSearchParams } from 'next/navigation';
 
+// Removed metadata export
+
 export default function ContactPage() {
 	const searchParams = useSearchParams();
 	const isSuccess = searchParams?.get('success') === 'true';

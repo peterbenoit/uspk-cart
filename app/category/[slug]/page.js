@@ -1,12 +1,22 @@
 import { getProductsByCategory } from '@/lib/products';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
+
+export async function generateMetadata({ params }) {
+	return {
+		title: `Category: ${(await params).slug}`,
+	};
+}
 
 export default async function CategoryPage({ params }) {
-	const resolvedParams = await params;
-	const slug = resolvedParams.slug;
+	const slug = (await params).slug;
 
 	// Get products filtered by category
 	const products = await getProductsByCategory(slug);
+
+	if (!products || products.length === 0) {
+		notFound();
+	}
 
 	return (
 		<div className="py-8">
