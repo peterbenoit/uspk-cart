@@ -27,6 +27,14 @@ export default function Home() {
 								<p className="text-sm text-gray-500 mt-1">{product.category}</p>
 							</Link>
 						))}
+						<Link
+							href={`/product/999`}
+							key={999}
+							className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+						>
+							<h3 className="font-semibold">Product 999</h3>
+							<p className="text-sm text-gray-500 mt-1">Category 999</p>
+						</Link>
 					</div>
 				</div>
 
