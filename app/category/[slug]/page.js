@@ -1,4 +1,5 @@
 import { getProductsByCategory } from '@/lib/products';
+import Link from 'next/link';
 
 export default function CategoryPage({ params }) {
 	// Get the category slug from params
@@ -14,7 +15,11 @@ export default function CategoryPage({ params }) {
 			{products.length > 0 ? (
 				<ul className="space-y-2 list-disc pl-5">
 					{products.map(product => (
-						<li key={product.id} className="text-gray-700">{product.name}</li>
+						<li key={product.id} className="text-gray-700">
+							<Link href={`/product/${product.id}`} className="text-blue-500 hover:underline">
+								{product.name}
+							</Link>
+						</li>
 					))}
 				</ul>
 			) : (
