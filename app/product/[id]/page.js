@@ -1,11 +1,10 @@
 import { getProductById } from '@/lib/products';
 import Link from 'next/link';
 
-export default function ProductDetailPage({ params }) {
-	// Get the product ID from params
-	const { id } = params;
+export default async function ProductDetailPage({ params }) {
+	const resolvedParams = await params;
+	const id = resolvedParams.id;
 
-	// Fetch the product data using the ID
 	const product = getProductById(id);
 
 	return (

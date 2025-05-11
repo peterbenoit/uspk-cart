@@ -1,9 +1,9 @@
 import { getProductsByCategory } from '@/lib/products';
 import Link from 'next/link';
 
-export default function CategoryPage({ params }) {
-	// Get the category slug from params
-	const { slug } = params;
+export default async function CategoryPage({ params }) {
+	const resolvedParams = await params;
+	const slug = resolvedParams.slug;
 
 	// Get products filtered by category
 	const products = getProductsByCategory(slug);
