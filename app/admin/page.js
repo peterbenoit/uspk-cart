@@ -18,15 +18,25 @@ export default function AdminPage() {
 		image_url: '',
 		stock: 0
 	});
+	const [userEmail, setUserEmail] = useState('');
+	const [error, setError] = useState(null); // Add error state
 	const router = useRouter();
 
+	// Force authentication check on every render to prevent unauthorized access
 	useEffect(() => {
+		// Reset loading state on every navigation to this page
+		setLoading(true);
+		setError(null); // Clear errors on navigation
+
 		async function checkSessionAndLoadProducts() {
+			// Clear any cached session data by getting a fresh session
 			const { data: { session } } = await supabase.auth.getSession();
 
 			if (!session) {
-				router.push('/login');
+				// No valid session, redirect to login
+				router.replace('/login'); // Changed from router.push
 			} else {
+				setUserEmail(session.user.email);
 				try {
 					const productsData = await getAllProducts();
 					setProducts(productsData);
@@ -39,7 +49,7 @@ export default function AdminPage() {
 		}
 
 		checkSessionAndLoadProducts();
-	}, [router]);
+	}, []);
 
 	const handleEditClick = (product) => {
 		setEditingId(product.id);
@@ -116,8 +126,22 @@ export default function AdminPage() {
 	};
 
 	const handleLogout = async () => {
-		await supabase.auth.signOut();
-		router.push('/login');
+		setLoading(true);
+		setError(null);
+		const { error } = await supabase.auth.signOut();
+
+		if (error) {
+			console.error('Error logging out:', error);
+			setError(error.message);
+			setLoading(false);
+		} else {
+			// Clear any client-side state
+			setUserEmail('');
+			setProducts([]);
+			// Use router.replace instead of push to prevent back navigation
+			router.replace('/login');
+			// setLoading(false); // Not strictly needed if redirecting immediately
+		}
 	};
 
 	if (loading) {
@@ -132,13 +156,22 @@ export default function AdminPage() {
 		<div className="py-8 max-w-6xl mx-auto px-4">
 			<div className="flex justify-between items-center mb-6">
 				<h1 className="text-3xl font-bold">Admin: Product List</h1>
-				<button
-					onClick={handleLogout}
-					className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium"
-				>
-					Logout
-				</button>
+				<div className="flex items-center space-x-4">
+					<span className="text-sm text-gray-600">Logged in as: {userEmail}</span>
+					<button
+						onClick={handleLogout}
+						className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium"
+					>
+						Logout
+					</button>
+				</div>
 			</div>
+
+			{error && ( // Display error if any
+				<div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-400 rounded-md">
+					<p>Error: {error}</p>
+				</div>
+			)}
 
 			<div className="mb-8 bg-white shadow-md rounded-lg p-6">
 				<h2 className="text-xl font-semibold mb-4">Add New Product</h2>

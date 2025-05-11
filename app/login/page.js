@@ -1,15 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function LoginPage() {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
-	const [loading, setLoading] = useState(false);
+	const [loading, setLoading] = useState(true); // Start with loading
 	const [error, setError] = useState(null);
 	const router = useRouter();
+
+	// Check if user is already logged in
+	useEffect(() => {
+		async function checkSession() {
+			const { data: { session } } = await supabase.auth.getSession();
+
+			console.log('Session: ' + JSON.stringify(session));
+
+			if (session) {
+				// User is already logged in, redirect to admin
+				router.replace('/admin');
+			} else {
+				// Not logged in, show the login form
+				setLoading(false);
+			}
+		}
+
+		checkSession();
+	}, [router]);
 
 	const handleLogin = async (e) => {
 		e.preventDefault();
@@ -26,14 +45,21 @@ export default function LoginPage() {
 			if (error) throw error;
 
 			// Redirect to admin page on successful login
-			router.push('/admin');
-			router.refresh();
+			router.replace('/admin');
 		} catch (error) {
 			setError(error.message);
 		} finally {
 			setLoading(false);
 		}
 	};
+
+	if (loading) {
+		return (
+			<div className="flex justify-center items-center h-[50vh]">
+				<div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex min-h-[70vh] flex-col items-center justify-center px-4">

@@ -1,8 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { products } from "@/lib/products";
+import { getAllProducts } from "@/lib/products";
 
-export default function Home() {
+export default async function Home() {
+	const products = await getAllProducts();
+
 	return (
 		<div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
 			<main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -17,24 +19,20 @@ export default function Home() {
 				<div className="w-full mb-8">
 					<h2 className="text-2xl font-bold mb-4">Featured Products</h2>
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-						{products.map(product => (
-							<Link
-								href={`/product/${product.id}`}
-								key={product.id}
-								className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-							>
-								<h3 className="font-semibold">{product.name}</h3>
-								<p className="text-sm text-gray-500 mt-1">{product.category}</p>
-							</Link>
-						))}
-						<Link
-							href={`/product/999`}
-							key={999}
-							className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-						>
-							<h3 className="font-semibold">Product 999</h3>
-							<p className="text-sm text-gray-500 mt-1">Category 999</p>
-						</Link>
+						{products && products.length > 0 ? (
+							products.map(product => (
+								<Link
+									href={`/product/${product.id}`}
+									key={product.id}
+									className="block p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+								>
+									<h3 className="font-semibold">{product.name}</h3>
+									<p className="text-sm text-gray-500 mt-1">{product.category}</p>
+								</Link>
+							))
+						) : (
+							<p>No products available</p>
+						)}
 					</div>
 				</div>
 

@@ -5,7 +5,7 @@ export default async function ProductDetailPage({ params }) {
 	const resolvedParams = await params;
 	const id = resolvedParams.id;
 
-	const product = getProductById(id);
+	const product = await getProductById(id);
 
 	return (
 		<div className="py-8 max-w-4xl mx-auto">
@@ -20,16 +20,32 @@ export default async function ProductDetailPage({ params }) {
 				<div className="bg-white shadow-md rounded-lg p-6">
 					<h1 className="text-3xl font-bold mb-4">{product.name}</h1>
 					<div className="mb-4">
-						<span className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2">
+						<span className="bg-gray-100 text-gray-800 text-sm font-medium me-2 px-2.5 py-0.5 rounded">
 							{product.category}
 						</span>
 					</div>
-					<p className="text-gray-700">{product.description}</p>
+					<p className="text-gray-700 mb-6">{product.description}</p>
+
+					{product.price && (
+						<p className="text-2xl font-bold text-green-600 mb-4">
+							${product.price.toFixed(2)}
+						</p>
+					)}
+
+					{product.stock !== undefined && (
+						<p className="text-sm text-gray-500">
+							{product.stock > 0 ? `In stock: ${product.stock}` : 'Out of stock'}
+						</p>
+					)}
+
+					<button className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+						Add to Cart
+					</button>
 				</div>
 			) : (
-				<div className="bg-red-50 border border-red-200 rounded-lg p-6">
-					<h1 className="text-xl font-medium text-red-700">Product not found</h1>
-					<p className="text-red-500 mt-2">The product with ID '{id}' does not exist.</p>
+				<div className="bg-white shadow-md rounded-lg p-6">
+					<h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
+					<p>Sorry, we couldn't find the product you're looking for.</p>
 				</div>
 			)}
 		</div>
