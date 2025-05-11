@@ -1,5 +1,10 @@
-export default function ContactPage({ searchParams }) {
-	const isSuccess = searchParams?.success === 'true';
+"use client";
+
+import { useSearchParams } from 'next/navigation';
+
+export default function ContactPage() {
+	const searchParams = useSearchParams();
+	const isSuccess = searchParams?.get('success') === 'true';
 
 	return (
 		<div className="py-8">
