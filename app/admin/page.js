@@ -1,9 +1,52 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { products } from '@/lib/products';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function AdminPage() {
+	const [loading, setLoading] = useState(true);
+	const router = useRouter();
+
+	useEffect(() => {
+		async function checkSession() {
+			const { data: { session } } = await supabase.auth.getSession();
+
+			if (!session) {
+				router.push('/login');
+			} else {
+				setLoading(false);
+			}
+		}
+
+		checkSession();
+	}, [router]);
+
+	if (loading) {
+		return (
+			<div className="flex justify-center items-center h-[50vh]">
+				<div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+			</div>
+		);
+	}
+
+	const handleLogout = async () => {
+		await supabase.auth.signOut();
+		router.push('/login');
+	};
+
 	return (
 		<div className="py-8 max-w-6xl mx-auto px-4">
-			<h1 className="text-3xl font-bold mb-6">Admin: Product List</h1>
+			<div className="flex justify-between items-center mb-6">
+				<h1 className="text-3xl font-bold">Admin: Product List</h1>
+				<button
+					onClick={handleLogout}
+					className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium"
+				>
+					Logout
+				</button>
+			</div>
 
 			<div className="overflow-x-auto bg-white shadow-md rounded-lg">
 				<table className="min-w-full table-auto">
