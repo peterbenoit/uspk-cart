@@ -13,13 +13,13 @@ export default async function CategoryPage({ params }) {
 			<h1 className="text-3xl font-bold mb-6">Products in: {slug}</h1>
 
 			{products && products.length > 0 ? (
-				<ul className="space-y-2 list-disc pl-5">
-					{products.map(product => (
-						<li key={product.id} className="text-gray-700">
-							<Link href={`/product/${product.id}`} className="text-blue-500 hover:underline">
+				<ul className="space-y-1 list-none p-0">
+					{products.map((product, index) => (
+						<li key={product.id} className={`p-3 rounded-md transition-colors ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50`}>
+							<Link href={`/product/${product.id}`} className="text-blue-600 hover:underline font-medium">
 								{product.name}
 							</Link>
-							<span className="text-sm text-gray-500 ml-2">({product.description})</span>
+							<p className="text-sm text-gray-600 ml-1">{product.description}</p>
 						</li>
 					))}
 				</ul>

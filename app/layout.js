@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
+import Link from "next/link"; // Link import is not used here anymore, but Header uses it.
 import "./globals.css";
+import Header from "@/components/Header"; // Import the Header component
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -23,16 +24,7 @@ export default function RootLayout({ children }) {
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
-				<header className="bg-gray-100 p-4 shadow-sm">
-					<nav className="container mx-auto flex gap-4 items-center">
-						<Link href="/" className="font-semibold hover:text-blue-600">Gemini</Link>
-						<Link href="/contact" className="hover:text-blue-600">Contact</Link>
-						<Link href="/category/gear" className="hover:text-blue-600">Gear</Link>
-						<Link href="/category/optics" className="hover:text-blue-600">Optics</Link>
-						<Link href="/category/safety" className="hover:text-blue-600">Safety</Link>
-						<Link href="/admin" className="hover:text-blue-600">Admin</Link>
-					</nav>
-				</header>
+				<Header /> {/* Use the Header component */}
 				<main className="container mx-auto p-4">
 					{children}
 				</main>

@@ -24,7 +24,7 @@ export default function ContactPage() {
 						type="text"
 						id="name"
 						name="name"
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+						className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						required
 					/>
 				</div>
@@ -35,7 +35,7 @@ export default function ContactPage() {
 						type="email"
 						id="email"
 						name="email"
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+						className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						required
 					/>
 				</div>
@@ -46,14 +46,14 @@ export default function ContactPage() {
 						id="message"
 						name="message"
 						rows="5"
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+						className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						required
 					></textarea>
 				</div>
 
 				<button
 					type="submit"
-					className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+					className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
 				>
 					Send Message
 				</button>
