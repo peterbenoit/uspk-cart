@@ -1,0 +1,11 @@
+name,category,description,price,image_url,stock
+Trail Running Shoes,Footwear,Lightweight shoes for rugged terrain,89.99,https://example.com/images/shoes.jpg,50
+Backpack 35L,Gear,Compact backpack for day hikes,59.95,https://example.com/images/backpack.jpg,75
+Insulated Water Bottle,Accessories,Double-walled bottle keeps drinks cold,24.50,https://example.com/images/bottle.jpg,200
+LED Headlamp,Lighting,Rechargeable headlamp with adjustable strap,29.99,https://example.com/images/headlamp.jpg,120
+Ultralight Tent 2P,Shelter,Two-person ultralight backpacking tent,219.00,https://example.com/images/tent.jpg,30
+Camp Stove,Cooking,Compact propane stove with wind shield,44.95,https://example.com/images/stove.jpg,80
+Hiking Poles,Accessories,Adjustable carbon trekking poles (pair),74.99,https://example.com/images/poles.jpg,100
+First Aid Kit,Safety,Compact kit with essentials for backcountry use,18.25,https://example.com/images/firstaid.jpg,150
+Compact Binoculars,Optics,Lightweight 8x binoculars for wildlife spotting,39.95,https://example.com/images/binoculars.jpg,60
+All-Weather Notebook,Stationery,Waterproof notebook for field notes,9.99,https://example.com/images/notebook.jpg,300
