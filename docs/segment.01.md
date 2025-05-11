@@ -45,9 +45,7 @@ Initialize a new e-commerce template project using **Next.js (JavaScript)** with
 -   Create `app/globals.css` and include:
 
     ```css
-    @tailwind base;
-    @tailwind components;
-    @tailwind utilities;
+    @import 'tailwindcss';
     ```
 
 -   Import `globals.css` into `app/layout.js`
