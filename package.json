@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "PORT=3002 next dev",
+        "dev": "PORT=3004 next dev",
         "build": "next build",
         "start": "next start",
         "lint": "next lint"
@@ -11,7 +11,8 @@
     "dependencies": {
         "next": "15.3.2",
         "react": "^19.0.0",
-        "react-dom": "^19.0.0"
+        "react-dom": "^19.0.0",
+        "resend": "^4.5.1"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3",
