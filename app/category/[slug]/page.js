@@ -19,17 +19,17 @@ export default async function CategoryPage({ params }) {
 	}
 
 	return (
-		<div className="py-8">
-			<h1 className="text-3xl font-bold mb-6">Products in: {slug}</h1>
+		<div className="py-8 max-w-3xl mx-auto">
+			<h1 className="text-2xl font-semibold mb-6">Products in: {slug}</h1>
 
 			{products && products.length > 0 ? (
-				<ul className="space-y-1 list-none p-0">
+				<ul className="space-y-2 list-none p-0">
 					{products.map((product, index) => (
-						<li key={product.id} className={`p-3 rounded-md transition-colors ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50`}>
-							<Link href={`/product/${product.id}`} className="text-blue-600 hover:underline font-medium">
+						<li key={product.id} className={`p-4 rounded-md transition-colors duration-150 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-indigo-50`}>
+							<Link href={`/product/${product.id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline font-medium text-lg">
 								{product.name}
 							</Link>
-							<p className="text-sm text-gray-600 ml-1">{product.description}</p>
+							<p className="text-sm text-gray-600 ml-1 mt-1">{product.description}</p>
 						</li>
 					))}
 				</ul>
