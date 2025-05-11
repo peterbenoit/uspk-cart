@@ -27,7 +27,9 @@ export default function RootLayout({ children }) {
 					<nav className="container mx-auto flex gap-4 items-center">
 						<Link href="/" className="font-semibold hover:text-blue-600">Gemini</Link>
 						<Link href="/contact" className="hover:text-blue-600">Contact</Link>
-						<Link href="/category/example" className="hover:text-blue-600">Category</Link>
+						<Link href="/category/gear" className="hover:text-blue-600">Gear</Link>
+						<Link href="/category/optics" className="hover:text-blue-600">Optics</Link>
+						<Link href="/category/safety" className="hover:text-blue-600">Safety</Link>
 						<Link href="/admin" className="hover:text-blue-600">Admin</Link>
 					</nav>
 				</header>

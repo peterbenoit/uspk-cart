@@ -4,4 +4,8 @@ Your role is to execute only one segment at a time, as provided. Do not anticipa
 
 This is a prompt-driven build. Stay within the instructions of the active segment.
 
-Begin with segment.01
+Don't attempt to run npm run dev, I will handle that
+
+We have finished segment.03
+
+Work on segment.04
