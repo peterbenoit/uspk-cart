@@ -25,7 +25,7 @@ export default function RootLayout({ children }) {
 			>
 				<header className="bg-gray-100 p-4 shadow-sm">
 					<nav className="container mx-auto flex gap-4 items-center">
-						<Link href="/" className="font-semibold hover:text-blue-600">Home</Link>
+						<Link href="/" className="font-semibold hover:text-blue-600">Gemini</Link>
 						<Link href="/contact" className="hover:text-blue-600">Contact</Link>
 						<Link href="/category/example" className="hover:text-blue-600">Category</Link>
 						<Link href="/admin" className="hover:text-blue-600">Admin</Link>
