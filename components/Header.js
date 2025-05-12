@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { Search, Cart3, ChevronDown } from 'react-bootstrap-icons';
+import { useCart } from "@/context/CartContext"; // Import useCart
 
 export default function Header() {
 	const [isShopOpen, setIsShopOpen] = useState(false);
 	const shopRef = useRef(null);
+	const { getCartTotalItems } = useCart(); // Get cart total items
+	const totalItems = getCartTotalItems();
 
 	const toggleShopDropdown = () => {
 		setIsShopOpen(!isShopOpen);
@@ -126,9 +129,11 @@ export default function Header() {
 					</button>
 					<button className="relative text-gray-600 hover:text-indigo-600 transition-colors" aria-label="View Cart">
 						<Cart3 size={24} />
-						<span className="absolute -top-2 -right-2.5 bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">
-							0
-						</span>
+						{totalItems > 0 && (
+							<span className="absolute -top-2 -right-2.5 bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">
+								{totalItems}
+							</span>
+						)}
 					</button>
 					{/* Mobile Menu Button - can be added here if needed */}
 				</div>
