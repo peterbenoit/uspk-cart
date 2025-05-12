@@ -1,34 +1,29 @@
-# Segment 15: Cart View Page
+# Segment 15: Cart Styling, Mobile Layout, and Persistence
 
 ## Purpose
 
-Create a dedicated page to display the user's current cart contents, using data from the BigCommerce Cart API.
+Improve the user experience of the cart by refining the styling, ensuring mobile responsiveness, and persisting cart state across reloads or tab closures.
 
 ## Goals
 
-- Show all items in the user's current cart.
-- Provide key details: product name, quantity, price, subtotal.
-- Enable navigation to checkout from the cart page.
+- Enhance visual layout of the cart page for both desktop and mobile
+- Add responsive styling for key elements (items, totals, buttons)
+- Store cart ID in `localStorage` and ensure it is reused correctly
+- Reload cart contents reliably after page reload or tab revisit
 
 ## Tasks
 
-- [ ] Create a new page at `/cart`.
-- [ ] Retrieve cart contents using the stored `cart_id` and the BigCommerce API.
-- [ ] Display a list of products with:
-    - Product name
-    - Product image (if available)
-    - Unit price
-    - Quantity
-    - Item subtotal
-- [ ] Display cart total at the bottom.
-- [ ] Show “Go to Checkout” button linking to BigCommerce’s hosted checkout.
+- [ ] Apply spacing, borders, typography, and responsive layout to the cart UI
+- [ ] Make the cart usable on smaller screens (mobile-friendly)
+- [ ] Confirm `cart_id` is saved to and read from `localStorage`
+- [ ] Ensure cart is fetched and rehydrated after refresh
+- [ ] Provide fallback UI if no `cart_id` is found
 
 ## Notes
 
-- Cart data should come from `getCart(cartId)` created in Segment 14.
-- If cart is expired or not found, display a friendly error and prompt to return to products.
+- This segment does not modify checkout logic or cart manipulation functions
+- Styling should follow the aesthetic defined by the rest of the project (Tailwind)
 
 ## Follow-ups
 
-- Segment 16: Enable quantity updates and item removal in the cart.
-- Segment 18: Implement the checkout redirection flow.
+- Segment 16: User login and authentication experience
