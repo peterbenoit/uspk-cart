@@ -30,9 +30,9 @@ export default async function ProductDetailPage({ params }) {
 			<Breadcrumbs path={breadcrumbPath} />
 			<div className="container mx-auto px-4 py-8">
 				<DetailedProductCard product={product} />
-				<div className="mt-6 max-w-md mx-auto">
+				{/* <div className="mt-6 max-w-md mx-auto">
 					<AddToCartButton productId={product.id} quantity={1} />
-				</div>
+				</div> */}
 			</div>
 		</>
 	);
