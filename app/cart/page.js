@@ -1,125 +1,162 @@
 'use client';
 
-import { useState, useEffect } from 'react'; // MODIFIED: Added useEffect
+import { useState, useEffect } from 'react';
+import { useCart } from '../../context/CartContext';
 import { useRouter } from 'next/navigation';
-import { useCart } from '../../context/CartContext'; // ADDED
-import Button from '../../components/Button';
 
 export default function CartPage() {
 	const {
 		cart,
 		loading: cartLoading,
 		error: cartError,
-		// refreshCart, // Not directly used as context functions handle refresh
+		cartExpired,
+		resetCartError,
 		updateQuantity,
 		removeFromCart,
 		getCartSubtotal,
-		getCartTotalItems // Corrected comma
+		getCartTotalItems,
+		getCheckoutUrl,
 	} = useCart();
 
 	const router = useRouter();
-	const [operationInProgress, setOperationInProgress] = useState({}); // MODIFIED: per-item operation status e.g. {itemId: 'update' | 'remove'}
-	const [itemQuantities, setItemQuantities] = useState({}); // ADDED: for controlled quantity inputs
+	const [operationInProgress, setOperationInProgress] = useState({});
+	const [itemQuantities, setItemQuantities] = useState({});
+	const [checkoutError, setCheckoutError] = useState(null);
 
 	// Initialize or update local item quantities when the cart changes
 	useEffect(() => {
 		if (cart && cart.line_items && cart.line_items.physical_items) {
-			const initialQuantities = {};
-			cart.line_items.physical_items.forEach(item => {
-				initialQuantities[item.id] = item.quantity;
-			});
+			const initialQuantities = cart.line_items.physical_items.reduce((acc, item) => {
+				acc[item.id] = item.quantity;
+				return acc;
+			}, {});
 			setItemQuantities(initialQuantities);
-		} else {
-			setItemQuantities({}); // Clear if cart is empty or not loaded
 		}
 	}, [cart]);
 
 	const handleUpdateQuantity = async (itemId, quantity) => {
-		if (operationInProgress[itemId]) return; // Prevent multiple operations on the same item
-
-		// Safeguard, though input onChange should prevent negative values in itemQuantities state
-		if (quantity < 0) {
-			console.warn("Quantity cannot be negative. Resetting input.");
-			// Revert local state to actual cart quantity if input was invalid
-			if (cart && cart.line_items && cart.line_items.physical_items) {
-				const currentItem = cart.line_items.physical_items.find(i => i.id === itemId);
-				if (currentItem) {
-					setItemQuantities(prev => ({ ...prev, [itemId]: currentItem.quantity }));
-				}
-			}
-			return;
-		}
-
-		setOperationInProgress(prev => ({ ...prev, [itemId]: 'update' }));
+		if (quantity < 1) return; // Prevent quantity less than 1
+		setOperationInProgress(prev => ({ ...prev, [itemId]: 'updating' }));
+		resetCartError(); // Clear previous errors
+		setCheckoutError(null);
 		try {
-			// updateQuantity in CartContext handles quantity === 0 by calling removeFromCart
 			await updateQuantity(itemId, quantity);
-			// itemQuantities will be updated by useEffect when cart refreshes
-		} catch (err) {
-			console.error(`Failed to update quantity for item ${itemId}:`, err);
-			// Optionally, show an error to the user. CartContext might set a global error.
-			// Revert local quantity to cart quantity on error to ensure consistency
-			if (cart && cart.line_items && cart.line_items.physical_items) {
-				const currentItem = cart.line_items.physical_items.find(i => i.id === itemId);
-				if (currentItem) {
-					setItemQuantities(prev => ({ ...prev, [itemId]: currentItem.quantity }));
-				}
-			}
+			// Update local state immediately for responsiveness
+			setItemQuantities(prev => ({ ...prev, [itemId]: quantity }));
+		} catch (error) {
+			console.error("Error updating quantity:", error);
+			// Error is handled by CartContext and displayed via cartError
 		} finally {
-			setOperationInProgress(prev => {
-				const newState = { ...prev };
-				delete newState[itemId];
-				return newState;
-			});
+			setOperationInProgress(prev => ({ ...prev, [itemId]: false }));
 		}
 	};
 
 	const handleRemoveItem = async (itemId) => {
-		if (operationInProgress[itemId]) return;
-		setOperationInProgress(prev => ({ ...prev, [itemId]: 'remove' }));
+		setOperationInProgress(prev => ({ ...prev, [itemId]: 'removing' }));
+		resetCartError(); // Clear previous errors
+		setCheckoutError(null);
 		try {
 			await removeFromCart(itemId);
-			// itemQuantities for this item will be implicitly handled as the item disappears or useEffect updates it.
-		} catch (err) {
-			console.error(`Failed to remove item ${itemId}:`, err);
-			// Optionally, show an error to the user.
+		} catch (error) {
+			console.error("Error removing item:", error);
+			// Error is handled by CartContext and displayed via cartError
 		} finally {
-			setOperationInProgress(prev => {
-				const newState = { ...prev };
-				delete newState[itemId];
-				return newState;
-			});
+			setOperationInProgress(prev => ({ ...prev, [itemId]: false }));
 		}
 	};
 
-	const handleProceedToCheckout = () => {
-		if (cart && cart.redirect_urls && cart.redirect_urls.checkout_url) {
-			window.location.href = cart.redirect_urls.checkout_url; // Use window.location for external redirect
-		} else {
-			console.warn("Checkout URL not available in cart object.");
-			alert("Could not proceed to checkout. Please try again or contact support.");
+	const handleProceedToCheckout = async () => {
+		resetCartError();
+		setCheckoutError(null); // Clear previous checkout errors
+		setOperationInProgress(prev => ({ ...prev, checkout: true }));
+
+		if (cartExpired) {
+			setCheckoutError("Your cart has expired. Please add items again.");
+			setOperationInProgress(prev => ({ ...prev, checkout: false }));
+			return;
+		}
+		if (!cart || !cart.id) {
+			setCheckoutError("Your cart is empty or invalid. Please add items to your cart.");
+			setOperationInProgress(prev => ({ ...prev, checkout: false }));
+			return;
+		}
+
+		try {
+			const checkoutUrl = await getCheckoutUrl();
+			if (checkoutUrl) {
+				router.push(checkoutUrl);
+			} else {
+				// Error state will be set by getCheckoutUrl in CartContext if URL is null
+				// but we can set a more specific one here if needed or rely on cartError
+				setCheckoutError("Could not retrieve checkout URL. Please try again or contact support.");
+			}
+		} catch (error) {
+			console.error("Error proceeding to checkout:", error);
+			setCheckoutError(error.message || "An unexpected error occurred while proceeding to checkout.");
+		} finally {
+			setOperationInProgress(prev => ({ ...prev, checkout: false }));
 		}
 	};
 
 	const formatCurrency = (amount, currencyCode = 'USD') => {
-		return new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).format(amount);
+		return new Intl.NumberFormat('en-US', {
+			style: 'currency',
+			currency: currencyCode,
+		}).format(amount);
 	};
 
-	if (cartLoading && !cart) {
-		return <div className="container mx-auto p-4 text-center">Loading cart...</div>;
+	if (cartLoading && !cart && !cartExpired) {
+		return <div className="text-center py-10">Loading cart...</div>;
 	}
 
-	if (cartError) {
-		return <div className="container mx-auto p-4 text-center text-red-500">Error loading cart: {cartError.message || String(cartError)}</div>;
+	// Handle cartExpired state first
+	if (cartExpired) {
+		return (
+			<div className="container mx-auto px-4 py-8 text-center">
+				<h1 className="text-2xl font-semibold mb-4">Cart Expired</h1>
+				<p className="mb-4">Your shopping cart has expired. Please try adding items again.</p>
+				{/* Optionally, provide a button to start a new cart or go to homepage */}
+				<button
+					onClick={() => router.push('/')}
+					className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+				>
+					Go to Homepage
+				</button>
+			</div>
+		);
+	}
+
+
+	if (cartError && !checkoutError) { // Only display general cart error if no specific checkout error
+		return (
+			<div className="container mx-auto px-4 py-8 text-center">
+				<h1 className="text-2xl font-semibold mb-4 text-red-600">Error</h1>
+				<p className="mb-4">{cartError}</p>
+				<button
+					onClick={() => {
+						resetCartError();
+						// Potentially try to refresh or re-initialize cart here if applicable
+						// For now, just clear error and let user decide next action or navigate away
+					}}
+					className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+				>
+					Try Again
+				</button>
+			</div>
+		);
 	}
 
 	if (!cart || !cart.line_items || !cart.line_items.physical_items || cart.line_items.physical_items.length === 0) {
 		return (
-			<div className="container mx-auto p-4 text-center">
+			<div className="container mx-auto px-4 py-8 text-center">
 				<h1 className="text-2xl font-semibold mb-4">Your Cart is Empty</h1>
-				<Button onClick={() => router.push('/')} className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+				<p className="mb-4">Looks like you haven't added anything to your cart yet.</p>
+				<button
+					onClick={() => router.push('/')}
+					className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+				>
 					Continue Shopping
-				</Button>
+				</button>
 			</div>
 		);
 	}
@@ -127,120 +164,100 @@ export default function CartPage() {
 	const { physical_items } = cart.line_items;
 	const subtotal = getCartSubtotal();
 	const totalItems = getCartTotalItems();
-	const currency = cart.currency && cart.currency.code ? cart.currency.code : 'USD'; // Ensure currency code is available, default to USD
-
+	const currency = cart.currency && cart.currency.code ? cart.currency.code : 'USD';
 	// Ensure subtotal is a valid number before formatting
 	const formattedSubtotal = typeof subtotal === 'number' ? formatCurrency(subtotal, currency) : 'N/A';
 
 	return (
-		<div className="container mx-auto p-4 sm:p-6 lg:p-8">
-			<h1 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-800">Your Shopping Cart</h1>
+		<div className="container mx-auto px-4 py-8">
+			<h1 className="text-3xl font-bold mb-6 text-center">Your Shopping Cart</h1>
 
-			<div className="space-y-4">
-				{physical_items.map(item => (
-					<div key={item.id} className="flex flex-col md:flex-row justify-between items-start md:items-center border rounded-lg p-4 shadow-sm bg-white">
-						<div className="flex items-center mb-4 md:mb-0 w-full md:w-auto flex-grow">
-							{item.image_url && (
-								<img
-									src={item.image_url}
-									alt={item.name}
-									className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-md mr-4 border hover:opacity-80 transition-opacity"
-									onClick={() => router.push(`/product/${item.product_id}`)}
-									style={{ cursor: 'pointer' }}
-								/>
-							)}
+			{checkoutError && (
+				<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+					<strong className="font-bold">Checkout Error: </strong>
+					<span className="block sm:inline">{checkoutError}</span>
+				</div>
+			)}
+			{cartError && !checkoutError && ( // Display general cart error if no specific checkout error
+				<div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+					<strong className="font-bold">Error: </strong>
+					<span className="block sm:inline">{cartError}</span>
+					<button onClick={resetCartError} className="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded text-sm">
+						Dismiss
+					</button>
+				</div>
+			)}
+
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+				<div className="md:col-span-2">
+					{physical_items.map((item) => (
+						<div key={item.id} className="flex items-center border-b py-4">
+							<img src={item.image_url || '/images/default.jpg'} alt={item.name} className="w-20 h-20 object-cover rounded mr-4" />
 							<div className="flex-grow">
-								<h2
-									className="text-md sm:text-lg font-semibold text-gray-700 hover:text-blue-600 cursor-pointer transition-colors"
-									onClick={() => router.push(`/product/${item.product_id}`)}
-								>
-									{item.name}
-								</h2>
-								{item.sku && <p className="text-xs sm:text-sm text-gray-500">SKU: {item.sku}</p>}
-								<p className="text-xs sm:text-sm text-gray-600">Unit Price: {formatCurrency(item.sale_price, currency)}</p>
-								<p className="text-xs sm:text-sm text-gray-500 mt-1" id={`item-total-${item.id}`}>Item Total: {formatCurrency(item.sale_price * item.quantity, currency)}</p>
+								<h2 className="text-lg font-semibold">{item.name}</h2>
+								<p className="text-sm text-gray-600">SKU: {item.sku || 'N/A'}</p>
+								<p className="text-sm text-gray-600">Price: {formatCurrency(item.sale_price, currency)}</p>
 							</div>
-						</div>
-
-						<div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 self-start md:self-center w-full md:w-auto mt-2 md:mt-0">
-							<div className="flex items-center space-x-1 sm:space-x-2">
-								<label htmlFor={`quantity-${item.id}`} className="text-xs sm:text-sm font-medium text-gray-600 whitespace-nowrap">Qty:</label>
+							<div className="flex items-center">
 								<input
 									type="number"
-									id={`quantity-${item.id}`}
-									name={`quantity-${item.id}`}
-									min="0"
-									value={itemQuantities[item.id] !== undefined ? itemQuantities[item.id] : ''} // Show empty if undefined, otherwise the number
+									min="1"
+									value={itemQuantities[item.id] || item.quantity}
 									onChange={(e) => {
-										const val = e.target.value;
-										const newQuantity = val === '' ? 0 : parseInt(val, 10);
-										if (val === '' || (!isNaN(newQuantity) && newQuantity >= 0)) {
-											setItemQuantities(prev => ({ ...prev, [item.id]: newQuantity }));
-										} else if (!isNaN(newQuantity) && newQuantity < 0) {
-											setItemQuantities(prev => ({ ...prev, [item.id]: 0 })); // Correct negative to 0
+										const newQuantity = parseInt(e.target.value, 10);
+										setItemQuantities(prev => ({ ...prev, [item.id]: newQuantity }));
+										if (newQuantity > 0) {
+											// Debounce or delay update if preferred
+											handleUpdateQuantity(item.id, newQuantity);
 										}
 									}}
-									disabled={!!operationInProgress[item.id]}
-									className="w-16 sm:w-20 p-1 sm:p-2 border rounded text-center focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-									aria-describedby={`item-total-${item.id}`}
+									onBlur={(e) => { // Ensure update on blur if value changed but not submitted by enter/button
+										const newQuantity = parseInt(e.target.value, 10);
+										if (newQuantity > 0 && newQuantity !== item.quantity) {
+											handleUpdateQuantity(item.id, newQuantity);
+										} else if (newQuantity <= 0) { // Reset to original if invalid on blur
+											setItemQuantities(prev => ({ ...prev, [item.id]: item.quantity }));
+										}
+									}}
+									className="w-16 text-center border rounded mx-2"
+									disabled={operationInProgress[item.id] === 'updating' || operationInProgress[item.id] === 'removing'}
 								/>
-								<Button
-									onClick={() => {
-										if (itemQuantities[item.id] !== undefined) { // Ensure quantity is set before updating
-											handleUpdateQuantity(item.id, itemQuantities[item.id]);
-										}
-									}}
-									disabled={
-										!!operationInProgress[item.id] ||
-										itemQuantities[item.id] === undefined ||
-										itemQuantities[item.id] === item.quantity // No change to update
-									}
-									className="px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+								<button
+									onClick={() => handleRemoveItem(item.id)}
+									className="text-red-500 hover:text-red-700 disabled:opacity-50"
+									disabled={operationInProgress[item.id] === 'removing' || operationInProgress[item.id] === 'updating'}
 								>
-									{operationInProgress[item.id] === 'update' ? '...' : 'Update'}
-								</Button>
+									{operationInProgress[item.id] === 'removing' ? 'Removing...' : 'Remove'}
+								</button>
 							</div>
-							<Button
-								onClick={() => handleRemoveItem(item.id)}
-								disabled={!!operationInProgress[item.id]}
-								className={`w-full sm:w-auto px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm ${operationInProgress[item.id] === 'remove' ? 'bg-red-300' : 'bg-red-500 hover:bg-red-600'} text-white rounded transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed`}
-							>
-								{operationInProgress[item.id] === 'remove' ? '...' : 'Remove'}
-							</Button>
 						</div>
-						<div className="text-right md:text-left mt-2 md:mt-0 w-full md:w-auto md:pl-4 pt-2 md:pt-0 border-t md:border-t-0 md:border-l border-gray-200">
-							<p id={`item-total-${item.id}`} className="text-sm sm:text-md font-semibold text-gray-700 whitespace-nowrap">
-								Item Total: {formatCurrency(item.sale_price * item.quantity, currency)}
-							</p>
-						</div>
-					</div>
-				))}
-			</div>
-
-			<div className="mt-6 p-4 border-t bg-gray-50 rounded-lg shadow">
-				<h2 className="text-xl font-semibold text-gray-800 mb-4">Order Summary</h2>
-				<div className="space-y-2">
-					<div className="flex justify-between">
-						<span className="text-gray-600">Total Items:</span>
-						<span className="font-medium text-gray-700">{totalItems}</span>
-					</div>
-					<div className="flex justify-between">
-						<span className="text-gray-600">Subtotal:</span>
-						<span className="font-medium text-gray-700">{formattedSubtotal}</span>
-					</div>
-					{/* Add more summary lines like shipping, taxes if available */}
-					<div className="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t mt-2">
-						<span>Grand Total:</span>
-						<span>{formattedSubtotal}</span>{/* Assuming subtotal is grand total for now */}
-					</div>
+					))}
 				</div>
-				<Button
-					onClick={handleProceedToCheckout}
-					disabled={cartLoading || totalItems === 0 || (cart && !cart.redirect_urls?.checkout_url)}
-					className="w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-				>
-					Proceed to Checkout
-				</Button>
+
+				<div className="md:col-span-1 bg-gray-50 p-6 rounded-lg shadow">
+					<h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+					<div className="flex justify-between mb-2">
+						<span>Subtotal ({totalItems} items)</span>
+						<span>{formattedSubtotal}</span>
+					</div>
+					{/* Add more summary details like estimated tax, shipping if available */}
+					<div className="border-t mt-4 pt-4">
+						<div className="flex justify-between font-bold text-lg">
+							<span>Total</span>
+							<span>{formattedSubtotal}</span> {/* Assuming total is same as subtotal for now */}
+						</div>
+					</div>
+					<button
+						onClick={handleProceedToCheckout}
+						disabled={operationInProgress.checkout || cartLoading} // REMOVED isMutating from useCart
+						className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded mt-6 disabled:opacity-70"
+					>
+						{operationInProgress.checkout ? 'Processing...' : 'Go to Checkout'}
+					</button>
+					{cart && cart.id && (
+						<p className="text-xs text-gray-500 mt-2 text-center">Cart ID: {cart.id}</p>
+					)}
+				</div>
 			</div>
 		</div>
 	);

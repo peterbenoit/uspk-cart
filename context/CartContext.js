@@ -8,6 +8,7 @@ import {
 	updateBigCommerceCartItem,
 	deleteBigCommerceCartItem,
 	deleteBigCommerceCart,
+	// getBigCommerceCheckoutUrl, // REMOVED - No longer called directly from context
 } from "../lib/cart"; // Assuming cart.js is in lib
 
 const CartContext = createContext();
@@ -20,12 +21,14 @@ export const CartProvider = ({ children }) => {
 	const [loading, setLoading] = useState(true); // Set to true initially
 	const [error, setError] = useState(null);
 	const [isMutating, setIsMutating] = useState(false); // Added for pending state
+	const [cartExpired, setCartExpired] = useState(false); // ADDED: State for expired cart
 
 	// Effect to initialize or load cart from BigCommerce
 	useEffect(() => {
 		const initializeCart = async () => {
 			setLoading(true);
 			setError(null);
+			setCartExpired(false); // Reset expired state
 			let storedCartId = localStorage.getItem("bigCommerceCartId");
 
 			if (storedCartId) {
@@ -38,21 +41,20 @@ export const CartProvider = ({ children }) => {
 						console.log("Cart rehydrated from localStorage:", existingCart);
 					} else {
 						// Cart ID from local storage might be invalid or cart deleted on server
-						console.warn("Could not retrieve cart with stored ID, creating new one if needed or clearing ID.");
+						console.warn("Could not retrieve cart with stored ID. Cart may be expired or invalid.");
 						localStorage.removeItem("bigCommerceCartId");
-						storedCartId = null; // Ensure we don't try to use it again in this session unless a new cart is made
-						// Optionally, create a new cart here if that's desired behavior,
-						// or wait for an item to be added. For now, just clear the invalid ID.
-						// setCart(null); // Already null
-						// setCartId(null); // Already null
+						setCartId(null); // Clear cartId state
+						setCart(null); // Clear cart state
+						setCartExpired(true); // Set expired state
+						// setError("Your cart session has expired. Please start a new one."); // Optionally set a generic error
 					}
 				} catch (err) {
 					console.error("Error rehydrating cart from localStorage:", err);
 					setError(err.message || "Failed to load cart.");
 					localStorage.removeItem("bigCommerceCartId"); // Clear invalid ID
-					storedCartId = null;
-					// setCart(null); // Already null
-					// setCartId(null); // Already null
+					setCartId(null);
+					setCart(null);
+					// Consider if this specific error should also set cartExpired
 				}
 			} else {
 				console.log("No cartId in localStorage.");
@@ -67,37 +69,33 @@ export const CartProvider = ({ children }) => {
 	// Function to refresh cart data from BigCommerce
 	const internalRefreshCart = async (idOfCartToRefresh) => {
 		if (!idOfCartToRefresh) {
-			// console.warn("internalRefreshCart called with no cartId. Cart might be empty or not yet created.");
-			// setCart(null); // Keep current cart state if no ID to refresh
-			// setLoading(false); // Ensure loading is false if we can't refresh
-			return; // Do nothing if there's no cart ID
+			return;
 		}
 		setLoading(true);
 		setError(null);
+		setCartExpired(false); // Reset expired state
 		try {
 			const refreshedCart = await getBigCommerceCart(idOfCartToRefresh);
 			if (refreshedCart && refreshedCart.id) {
 				setCart(refreshedCart);
-				setCartId(refreshedCart.id); // Ensure cartId state is also updated
-				localStorage.setItem("bigCommerceCartId", refreshedCart.id); // Persist refreshed cart_id
+				setCartId(refreshedCart.id);
+				localStorage.setItem("bigCommerceCartId", refreshedCart.id);
 				console.log("Cart refreshed:", refreshedCart);
 			} else {
-				// If refresh returns null or no id, the cart might have been deleted on server
-				console.warn("Cart refresh returned no data for ID:", idOfCartToRefresh, ". Clearing local cart state.");
+				console.warn("Cart refresh returned no data for ID:", idOfCartToRefresh, ". Clearing local cart state and marking as expired.");
 				setCart(null);
 				setCartId(null);
 				localStorage.removeItem("bigCommerceCartId");
+				setCartExpired(true); // Set expired state
+				// setError("Your cart session has expired. Please refresh or start a new one.");
 			}
 		} catch (err) {
 			console.error("Error refreshing cart:", err);
 			setError(err.message || "Failed to refresh cart.");
 			// Potentially clear cart if refresh fails due to cart not found (e.g. 404)
-			if (err.response && err.response.status === 404) {
-				console.warn("Cart not found on server during refresh. Clearing local cart state.");
-				setCart(null);
-				setCartId(null);
-				localStorage.removeItem("bigCommerceCartId");
-			}
+			// The getBigCommerceCart function now returns null for 404/403, so the 'else' block above should handle it.
+			// However, if another type of error occurs, we might want to clear the cart.
+			// For now, we rely on the getBigCommerceCart's null return for expired/invalid cases.
 		} finally {
 			setLoading(false);
 		}
@@ -109,13 +107,25 @@ export const CartProvider = ({ children }) => {
 			return;
 		}
 		setIsMutating(true);
-		setLoading(true); // Keep for general loading state if preferred
+		setLoading(true);
 		setError(null);
+		setCartExpired(false); // Reset expired state on new add attempt
 
-		const currentLocalCartId = cartId || localStorage.getItem("bigCommerceCartId");
+		let currentLocalCartId = cartId || localStorage.getItem("bigCommerceCartId");
+
+		// If cart was marked as expired, treat as if no cartId exists to force creation of a new one.
+		if (cartExpired && currentLocalCartId) {
+			console.log("Cart was marked as expired, attempting to create a new cart.");
+			currentLocalCartId = null; // Force new cart creation in the API
+			localStorage.removeItem("bigCommerceCartId"); // Clear stale ID
+			setCartId(null); // Clear stale ID in state
+			setCart(null); // Clear stale cart data in state
+		}
+
+
 		const payload = { productId, quantity, ...(variantId && { variantId }) };
 		if (currentLocalCartId) {
-			payload.cartId = currentLocalCartId; // Send existing cartId to the API route
+			payload.cartId = currentLocalCartId;
 		}
 
 		try {
@@ -128,27 +138,38 @@ export const CartProvider = ({ children }) => {
 				body: JSON.stringify(payload),
 			});
 
-			const updatedCart = await response.json();
+			const responseData = await response.json(); // Changed variable name to avoid conflict
 
 			if (!response.ok) {
-				console.error("Error response from /api/cart/add:", updatedCart);
-				throw new Error(updatedCart.message || `Failed to add item: ${response.statusText}`);
-			}
-
-			if (updatedCart && updatedCart.id) {
-				setCart(updatedCart);
-				setCartId(updatedCart.id);
-				localStorage.setItem("bigCommerceCartId", updatedCart.id);
-				console.log("Item added, cart updated via API:", updatedCart);
-				// Potentially show a success toast/message here
+				console.error("Error response from /api/cart/add:", responseData);
+				// Check if the error indicates an invalid cart that the API couldn't recover from
+				if (responseData.error === "CART_NOT_FOUND" || response.status === 404 || response.status === 403) {
+					console.warn("/api/cart/add indicated cart not found or invalid. Clearing local cart and trying to create a new one.");
+					localStorage.removeItem("bigCommerceCartId");
+					setCartId(null);
+					setCart(null);
+					setCartExpired(true); // Mark as expired so UI can react
+					// Optionally, could retry addToCart without cartId here, but API route should handle new cart creation.
+					// For now, let the user see the expired message and try adding again, which will then create a new cart.
+					setError("Your cart session has expired. Adding the item will create a new cart.");
+				} else {
+					setError(responseData.message || `Failed to add item: ${response.statusText}`);
+				}
+				// throw new Error(responseData.message || `Failed to add item: ${response.statusText}`);
+			} else if (responseData && responseData.id) {
+				setCart(responseData);
+				setCartId(responseData.id);
+				localStorage.setItem("bigCommerceCartId", responseData.id);
+				console.log("Item added, cart updated via API:", responseData);
+				setCartExpired(false); // Cart is now valid
 			} else {
-				console.error("Received unexpected cart data from API:", updatedCart);
-				throw new Error("Failed to process cart update from API.");
+				console.error("Received unexpected cart data from API:", responseData);
+				setError("Failed to process cart update from API.");
+				// throw new Error("Failed to process cart update from API.");
 			}
 		} catch (err) {
 			console.error("Error in addToCart (calling /api/cart/add):", err);
 			setError(err.message || "Failed to add item.");
-			// No need to clear local storage cartId here, as the API route handles cart creation/retrieval logic
 		} finally {
 			setLoading(false);
 			setIsMutating(false);
@@ -171,6 +192,7 @@ export const CartProvider = ({ children }) => {
 		setIsMutating(true);
 		setLoading(true);
 		setError(null);
+		// setCartExpired(false); // Don't reset cartExpired here
 
 		try {
 			console.log(`Calling /api/cart/remove for cart: ${currentLocalCartId}, item: ${itemId}`);
@@ -186,14 +208,24 @@ export const CartProvider = ({ children }) => {
 
 			if (!response.ok) {
 				console.error("Error response from /api/cart/remove:", updatedCart);
-				throw new Error(updatedCart.message || `Failed to remove item: ${response.statusText}`);
-			}
-
-			if (updatedCart && updatedCart.id) {
+				// Check if the error indicates an invalid cart
+				if (updatedCart.error === "CART_NOT_FOUND" || response.status === 404 || response.status === 403) {
+					console.warn("/api/cart/remove indicated cart not found or invalid. Clearing local cart.");
+					localStorage.removeItem("bigCommerceCartId");
+					setCartId(null);
+					setCart(null);
+					setCartExpired(true);
+					setError("Your cart session has expired. Please try adding items again.");
+				} else {
+					setError(updatedCart.message || `Failed to remove item: ${response.statusText}`);
+				}
+				// throw new Error(updatedCart.message || `Failed to remove item: ${response.statusText}`);
+			} else if (updatedCart && updatedCart.id) {
 				setCart(updatedCart);
 				setCartId(updatedCart.id);
 				localStorage.setItem("bigCommerceCartId", updatedCart.id);
 				console.log("Item removed, cart updated via API:", updatedCart);
+				setCartExpired(false); // Cart is valid
 			} else {
 				// If the cart was deleted (e.g. last item removed), or API returned null
 				setCart(null);
@@ -265,17 +297,28 @@ export const CartProvider = ({ children }) => {
 
 			if (!response.ok) {
 				console.error("Error response from /api/cart/update:", updatedCart);
-				throw new Error(updatedCart.message || `Failed to update quantity: ${response.statusText}`);
-			}
-
-			if (updatedCart && updatedCart.id) {
+				// Check if the error indicates an invalid cart
+				if (updatedCart.error === "CART_NOT_FOUND" || response.status === 404 || response.status === 403) {
+					console.warn("/api/cart/update indicated cart not found or invalid. Clearing local cart.");
+					localStorage.removeItem("bigCommerceCartId");
+					setCartId(null);
+					setCart(null);
+					setCartExpired(true);
+					setError("Your cart session has expired. Please try adding items again.");
+				} else {
+					setError(updatedCart.message || `Failed to update quantity: ${response.statusText}`);
+				}
+				// throw new Error(updatedCart.message || `Failed to update quantity: ${response.statusText}`);
+			} else if (updatedCart && updatedCart.id) {
 				setCart(updatedCart);
 				setCartId(updatedCart.id);
 				localStorage.setItem("bigCommerceCartId", updatedCart.id);
 				console.log("Quantity updated, cart updated via API:", updatedCart);
+				setCartExpired(false); // Cart is valid
 			} else {
 				console.error("Received unexpected cart data from /api/cart/update:", updatedCart);
-				throw new Error("Failed to process cart update from API after quantity change.");
+				setError("Failed to process cart update from API after quantity change.");
+				// throw new Error("Failed to process cart update from API.");
 			}
 		} catch (err) {
 			console.error("Error in updateQuantity (calling /api/cart/update):", err);
@@ -287,25 +330,47 @@ export const CartProvider = ({ children }) => {
 	};
 
 	const clearCart = async () => {
+		const currentLocalCartId = cartId || localStorage.getItem("bigCommerceCartId");
+		if (!currentLocalCartId) {
+			console.log("No cart to clear.");
+			setCart(null);
+			setCartId(null);
+			// No need to remove from localStorage if it wasn't there or already cleared
+			return;
+		}
+
+		if (isMutating) {
+			console.log("Mutation already in progress, skipping clearCart");
+			return;
+		}
+		setIsMutating(true);
 		setLoading(true);
 		setError(null);
-		const currentLocalCartId = cartId || localStorage.getItem("bigCommerceCartId");
+		// setCartExpired(false); // Don't reset cartExpired here
 
-		if (currentLocalCartId) {
-			try {
-				await deleteBigCommerceCart(currentLocalCartId);
-				console.log("BigCommerce cart deleted:", currentLocalCartId);
-			} catch (err) {
-				console.error("Error deleting BigCommerce cart:", err);
-				// Don't set error state here, as we will clear client-side anyway
+		try {
+			console.log(`Attempting to delete cart ${currentLocalCartId} from BigCommerce`);
+			await deleteBigCommerceCart(currentLocalCartId); // Assumes this function exists and works
+			console.log(`Cart ${currentLocalCartId} deleted from BigCommerce.`);
+		} catch (err) {
+			console.error(`Error deleting BigCommerce cart ${currentLocalCartId}:`, err);
+			// If cart not found, it's already gone, which is fine.
+			if (err.response && (err.response.status === 404 || err.response.status === 403)) {
+				console.warn(`Cart ${currentLocalCartId} not found or forbidden during delete. Assuming already gone.`);
+			} else {
+				setError(err.message || "Failed to clear cart on server.");
+				// Don't stop local clear if server clear fails for other reasons
 			}
+		} finally {
+			// Always clear local cart state
+			setCart(null);
+			setCartId(null);
+			localStorage.removeItem("bigCommerceCartId");
+			setCartExpired(false); // A cleared cart is not an expired cart.
+			setLoading(false);
+			setIsMutating(false);
+			console.log("Local cart cleared.");
 		}
-		// Always clear client-side cart state and localStorage
-		setCart(null);
-		setCartId(null);
-		localStorage.removeItem("bigCommerceCartId");
-		console.log("Client-side cart cleared.");
-		setLoading(false);
 	};
 
 	const getCartTotalItems = () => {
@@ -330,6 +395,60 @@ export const CartProvider = ({ children }) => {
 
 	const getRawCart = () => cart;
 
+	// Function to get checkout URL
+	const getCheckoutUrl = async () => {
+		const currentLocalCartId = cartId || localStorage.getItem("bigCommerceCartId");
+		if (!currentLocalCartId) {
+			setError("Cart ID is missing, cannot proceed to checkout.");
+			return null;
+		}
+
+		if (cartExpired) {
+			setError("Cart has expired, please create a new one.");
+			return null;
+		}
+
+		setIsMutating(true);
+		setError(null);
+		try {
+			const response = await fetch('/api/cart/checkout', { // Call the new API route
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ cartId: currentLocalCartId }),
+			});
+
+			const responseData = await response.json();
+
+			if (!response.ok) {
+				console.error("Error response from /api/cart/checkout:", responseData);
+				setError(responseData.message || `Failed to retrieve checkout URL: ${response.statusText}`);
+				// Optionally, handle specific statuses like 404 to set cartExpired
+				if (response.status === 404 && responseData.message && responseData.message.toLowerCase().includes("cart may be empty, invalid, or expired")) {
+					// Consider if cart should be marked as expired based on this specific error
+					// setCartExpired(true);
+				}
+				return null;
+			}
+
+			if (responseData.checkoutUrl) {
+				return responseData.checkoutUrl;
+			} else {
+				console.error("Checkout URL missing in successful response from /api/cart/checkout:", responseData);
+				setError("Received an unexpected response from the server when fetching checkout URL.");
+				return null;
+			}
+
+		} catch (err) {
+			console.error("Error calling /api/cart/checkout or processing response:", err);
+			setError(err.message || "An unexpected error occurred while trying to get the checkout URL.");
+			return null;
+		} finally {
+			setIsMutating(false);
+		}
+	};
+
 	return (
 		<CartContext.Provider
 			value={{
@@ -345,8 +464,14 @@ export const CartProvider = ({ children }) => {
 				getRawCart,
 				loading,
 				error,
-				isMutating, // Expose isMutating
-				refreshCart: () => internalRefreshCart(cartId || localStorage.getItem("bigCommerceCartId"))
+				isMutating,
+				cartExpired,
+				getCheckoutUrl, // This now calls the API route
+				refreshCart: () => internalRefreshCart(cartId || localStorage.getItem("bigCommerceCartId")),
+				resetCartError: () => {
+					setError(null);
+					setCartExpired(false);
+				}
 			}}
 		>
 			{children}
