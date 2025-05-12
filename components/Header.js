@@ -94,7 +94,7 @@ export default function Header() {
 										</div>
 										{/* View All Products Button - Spanning two columns */}
 										<div className="col-span-2 mt-4">
-											<Link href="/products" className="block w-full text-center px-6 py-2.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm font-medium">
+											<Link href="/product" className="block w-full text-center px-6 py-2.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm font-medium">
 												View All Products
 											</Link>
 										</div>
