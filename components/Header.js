@@ -127,14 +127,14 @@ export default function Header() {
 					<button className="text-gray-600 hover:text-indigo-600 transition-colors" aria-label="Search">
 						<Search size={22} />
 					</button>
-					<button className="relative text-gray-600 hover:text-indigo-600 transition-colors" aria-label="View Cart">
+					<Link href="/cart" className="relative text-gray-600 hover:text-indigo-600 transition-colors" aria-label="View Cart">
 						<Cart3 size={24} />
 						{totalItems > 0 && (
 							<span className="absolute -top-2 -right-2.5 bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">
 								{totalItems}
 							</span>
 						)}
-					</button>
+					</Link>
 					{/* Mobile Menu Button - can be added here if needed */}
 				</div>
 			</div>

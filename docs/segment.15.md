@@ -18,6 +18,7 @@ Improve the user experience of the cart by refining the styling, ensuring mobile
 - [ ] Confirm `cart_id` is saved to and read from `localStorage`
 - [ ] Ensure cart is fetched and rehydrated after refresh
 - [ ] Provide fallback UI if no `cart_id` is found
+- [ ] Ensure user can access /cart from icon in Header
 
 ## Notes
 
