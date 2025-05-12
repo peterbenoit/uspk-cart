@@ -2,6 +2,7 @@ import { getProductById } from '@/lib/products';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import AddToCartButton from '@/components/AddToCartButton';
 
 export async function generateMetadata({ params }) {
 	const product = await getProductById((await params).id);
@@ -36,12 +37,13 @@ export default async function ProductDetailPage({ params }) {
 						<img src={product.image_url} alt={product.name} className="w-full h-64 object-cover rounded-md mb-4" />
 					)}
 					<p className="text-gray-700 mb-4">{product.description}</p>
-					<div className="flex justify-between items-center">
+					<div className="flex justify-between items-center mb-4">
 						<p className="text-xl font-bold text-indigo-600">${product.price.toFixed(2)}</p>
 						<p className={`text-sm font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
 							{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
 						</p>
 					</div>
+					<AddToCartButton productId={product.id} />
 				</div>
 			</div>
 		</>

@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import AddToCartButton from './AddToCartButton';
 
 const DetailedProductCard = ({ product }) => {
 	if (!product) {
@@ -19,8 +20,8 @@ const DetailedProductCard = ({ product }) => {
 	const descriptionSnippet = product.description ? stripHtml(product.description).substring(0, 100) + '...' : 'No description available.';
 
 	return (
-		<div className="border rounded-lg p-6 shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out bg-white">
-			<Link href={`/product/${product.id}`}>
+		<div className="border rounded-lg p-6 shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out bg-white flex flex-col justify-between h-full">
+			<Link href={`/product/${product.id}`} className="flex flex-col flex-grow">
 				<div className="relative">
 					{product.images && product.images.length > 0 ? (
 						<div className="w-full h-56 relative mb-4 rounded-lg overflow-hidden">
@@ -39,14 +40,12 @@ const DetailedProductCard = ({ product }) => {
 					)}
 					<h3 className="text-xl font-bold text-gray-900 mb-2 truncate" title={product.name}>{product.name}</h3>
 					<p className="text-lg font-semibold text-blue-600 mb-2">${product.price}</p>
-					<p className="text-sm text-gray-700 mb-4 h-16 overflow-hidden">{descriptionSnippet}</p>
-					<div className="text-center">
-						<span className="inline-block bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-blue-600 transition-colors duration-300">
-							View Details
-						</span>
-					</div>
+					<p className="text-sm text-gray-700 mb-4 h-16 overflow-hidden flex-grow">{descriptionSnippet}</p>
 				</div>
 			</Link>
+			<div className="mt-4">
+				<AddToCartButton productId={product.id} />
+			</div>
 		</div>
 	);
 };
