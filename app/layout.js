@@ -1,9 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link"; // Link import is not used here anymore, but Header uses it.
 import "./globals.css";
-import Header from "@/components/Header"; // Import the Header component
-import Footer from "@/components/Footer"; // Import the Footer component
-import Breadcrumbs from "@/components/Breadcrumbs"; // Import the Breadcrumbs component
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -26,12 +25,11 @@ export default function RootLayout({ children }) {
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-800 flex flex-col min-h-screen`}
 			>
-				<Header /> {/* Use the Header component */}
+				<Header />
 				<main className="container mx-auto p-4 sm:p-6 lg:p-8 flex-grow">
-					<Breadcrumbs /> {/* Add the Breadcrumbs component here */}
 					{children}
 				</main>
-				<Footer /> {/* Use the Footer component */}
+				<Footer />
 			</body>
 		</html>
 	);

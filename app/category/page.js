@@ -25,11 +25,16 @@ export const metadata = {
 	},
 };
 
+import Breadcrumbs from '@/components/Breadcrumbs';
+
 export default function CategoryIndexPage() {
 	return (
-		<div className="container mx-auto px-4 py-8">
-			<h1 className="text-3xl font-bold mb-4">Category Index Page</h1>
-			<p className="mb-4">This is a placeholder for the category index page.</p>
-		</div>
+		<>
+			<Breadcrumbs path={[{ href: '/', name: 'Home' }, { href: '/category', name: 'Categories' }]} />
+			<div className="container mx-auto px-4 py-8">
+				<h1 className="text-3xl font-bold mb-4">Category Index Page</h1>
+				<p className="mb-4">This is a placeholder for the category index page.</p>
+			</div>
+		</>
 	);
 }

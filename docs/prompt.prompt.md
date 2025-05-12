@@ -1,4 +1,4 @@
-For our interactions, please provide responses without code blocks.
+For our interactions, please put code in the appropriate file, not in the chat window.
 
 You are causing me to hit rate limits with your verbose verbiage.
 
@@ -10,4 +10,18 @@ Any responses should prioritize clear, direct communication while maintaining br
 
 ---
 
-Create placeholder landing pages for both product and category routes to avoid 404s. Each should render a basic heading and instructional text for now, such as "Product Listing Page" or "Category Index", and include a link back to the home page.
+Edit the Breadcrumbs to show the product name instead of the product ID.
+
+Not:
+Home
+/
+Product
+/
+114
+
+Do:
+Home
+/
+Product
+/
+Product Name
