@@ -21,7 +21,7 @@ const DetailedProductCard = ({ product }) => {
 	return (
 		<div className="border rounded-lg p-6 shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out bg-white">
 			<Link href={`/product/${product.id}`}>
-				<a>
+				<div className="relative">
 					{product.images && product.images.length > 0 ? (
 						<div className="w-full h-56 relative mb-4 rounded-lg overflow-hidden">
 							<Image
@@ -45,7 +45,7 @@ const DetailedProductCard = ({ product }) => {
 							View Details
 						</span>
 					</div>
-				</a>
+				</div>
 			</Link>
 		</div>
 	);

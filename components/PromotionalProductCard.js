@@ -27,7 +27,7 @@ const PromotionalProductCard = ({ product, promotion }) => {
 		<div className="border rounded-lg p-4 shadow-lg hover:shadow-xl transition-shadow duration-300 ease-in-out relative">
 			{promotionBadge}
 			<Link href={`/product/${product.id}`}>
-				<a>
+				<div className="relative">
 					{product.images && product.images.length > 0 ? (
 						<div className="w-full h-48 relative mb-4 rounded-md overflow-hidden">
 							<Image
@@ -44,7 +44,7 @@ const PromotionalProductCard = ({ product, promotion }) => {
 					)}
 					<h3 className="text-lg font-semibold text-gray-800 truncate" title={product.name}>{product.name}</h3>
 					<p className="text-md text-gray-600">${product.price}</p>
-				</a>
+				</div>
 			</Link>
 		</div>
 	);
