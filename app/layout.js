@@ -3,6 +3,7 @@ import Link from "next/link"; // Link import is not used here anymore, but Heade
 import "./globals.css";
 import Header from "@/components/Header"; // Import the Header component
 import Footer from "@/components/Footer"; // Import the Footer component
+import Breadcrumbs from "@/components/Breadcrumbs"; // Import the Breadcrumbs component
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
 			>
 				<Header /> {/* Use the Header component */}
 				<main className="container mx-auto p-4 sm:p-6 lg:p-8 flex-grow">
+					<Breadcrumbs /> {/* Add the Breadcrumbs component here */}
 					{children}
 				</main>
 				<Footer /> {/* Use the Footer component */}

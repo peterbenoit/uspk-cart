@@ -36,11 +36,6 @@ export default async function ProductDetailPage({ params }) {
 					</p>
 				</div>
 			</div>
-			<div className="mt-6">
-				<Link href={`/category/${product.category}`} className="text-indigo-600 hover:underline">
-					&larr; Back to {product.category}
-				</Link>
-			</div>
 		</div>
 	);
 }
