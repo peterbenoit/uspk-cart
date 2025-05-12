@@ -19,7 +19,7 @@ export default async function Home() {
 							<Link href={`/product/${product.id}`} className="block">
 								{product.image_url && (
 									<img
-										src={product.image_url}
+										src={`images/guns/${product.image_url}`}
 										alt={product.name}
 										className="w-full h-48 object-cover"
 									/>

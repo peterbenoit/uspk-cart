@@ -1,4 +1,4 @@
-// /Users/peterbenoit/GitHub/NextjsEcommerceTemplateGemini25/components/Button.js
+
 export default function Button({ type = "button", onClick, children, className = "bg-indigo-600 hover:bg-indigo-700 text-white" }) {
 	return (
 		<button

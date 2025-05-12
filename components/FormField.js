@@ -1,4 +1,4 @@
-// /Users/peterbenoit/GitHub/NextjsEcommerceTemplateGemini25/components/FormField.js
+
 export default function FormField({ label, id, type = "text", name, value, onChange, required, placeholder, rows, step, min }) {
 	const InputComponent = type === "textarea" ? "textarea" : "input";
 	return (
