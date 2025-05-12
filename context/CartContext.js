@@ -19,6 +19,7 @@ export const CartProvider = ({ children }) => {
 	const [cartId, setCartId] = useState(null);
 	const [loading, setLoading] = useState(true); // Set to true initially
 	const [error, setError] = useState(null);
+	const [isMutating, setIsMutating] = useState(false); // Added for pending state
 
 	// Effect to initialize or load cart from BigCommerce
 	useEffect(() => {
@@ -103,38 +104,54 @@ export const CartProvider = ({ children }) => {
 	};
 
 	const addToCart = async (productId, quantity = 1, variantId = null) => {
-		setLoading(true);
+		if (isMutating) {
+			console.log("Mutation already in progress, skipping addToCart");
+			return;
+		}
+		setIsMutating(true);
+		setLoading(true); // Keep for general loading state if preferred
 		setError(null);
-		const lineItems = [{ productId, quantity, ...(variantId && { variant_id: variantId }) }];
-		let currentLocalCartId = cartId || localStorage.getItem("bigCommerceCartId");
+
+		const currentLocalCartId = cartId || localStorage.getItem("bigCommerceCartId");
+		const payload = { productId, quantity, ...(variantId && { variantId }) };
+		if (currentLocalCartId) {
+			payload.cartId = currentLocalCartId; // Send existing cartId to the API route
+		}
 
 		try {
-			let updatedCart;
-			if (currentLocalCartId) {
-				console.log("Adding to existing cart:", currentLocalCartId);
-				updatedCart = await addBigCommerceCartLineItems(currentLocalCartId, lineItems);
-			} else {
-				console.log("Creating new cart");
-				updatedCart = await createBigCommerceCart(lineItems);
+			console.log("Calling /api/cart/add with payload:", payload);
+			const response = await fetch('/api/cart/add', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(payload),
+			});
+
+			const updatedCart = await response.json();
+
+			if (!response.ok) {
+				console.error("Error response from /api/cart/add:", updatedCart);
+				throw new Error(updatedCart.message || `Failed to add item: ${response.statusText}`);
 			}
 
 			if (updatedCart && updatedCart.id) {
 				setCart(updatedCart);
 				setCartId(updatedCart.id);
 				localStorage.setItem("bigCommerceCartId", updatedCart.id);
-				console.log("Item added, cart updated:", updatedCart);
+				console.log("Item added, cart updated via API:", updatedCart);
+				// Potentially show a success toast/message here
 			} else {
-				throw new Error("Failed to add item to cart or create cart.");
+				console.error("Received unexpected cart data from API:", updatedCart);
+				throw new Error("Failed to process cart update from API.");
 			}
 		} catch (err) {
-			console.error("Error in addToCart:", err);
+			console.error("Error in addToCart (calling /api/cart/add):", err);
 			setError(err.message || "Failed to add item.");
-			// If cart creation failed, ensure no stale cartId is left in localStorage
-			if (!currentLocalCartId) {
-				localStorage.removeItem("bigCommerceCartId");
-			}
+			// No need to clear local storage cartId here, as the API route handles cart creation/retrieval logic
 		} finally {
 			setLoading(false);
+			setIsMutating(false);
 		}
 	};
 
@@ -274,6 +291,7 @@ export const CartProvider = ({ children }) => {
 				getRawCart,
 				loading,
 				error,
+				isMutating, // Expose isMutating
 				refreshCart: () => internalRefreshCart(cartId || localStorage.getItem("bigCommerceCartId"))
 			}}
 		>

@@ -1,6 +1,4 @@
 import { getProductById } from '@/lib/products';
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import AddToCartButton from '@/components/AddToCartButton';
 import DetailedProductCard from '@/components/DetailedProductCard';
