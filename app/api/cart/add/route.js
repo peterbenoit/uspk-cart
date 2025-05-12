@@ -49,17 +49,6 @@ export async function POST(request) {
 			return NextResponse.json({ message: 'Failed to update cart with BigCommerce' }, { status: 500 });
 		}
 
-		if (!newCartCreated) {
-			console.log(`/api/cart/add: Adding items to existing cart ${cart.id}`);
-			try {
-				cart = await addBigCommerceCartLineItems(cart.id, lineItems);
-				console.log(`/api/cart/add: Items added to cart ${cart.id}`);
-			} catch (addError) {
-				console.error(`/api/cart/add: Error adding items to BigCommerce cart ${cart.id}:`, addError.response?.data || addError.message);
-				return NextResponse.json({ message: 'Failed to add items to existing cart.', error: addError.response?.data || addError.message }, { status: 500 });
-			}
-		}
-
 		console.log("/api/cart/add: Successfully processed cart:", cart.id);
 		return NextResponse.json(cart, { status: 200 });
 

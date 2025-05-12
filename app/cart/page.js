@@ -127,7 +127,10 @@ export default function CartPage() {
 	const { physical_items } = cart.line_items;
 	const subtotal = getCartSubtotal();
 	const totalItems = getCartTotalItems();
-	const currency = cart.currency.code;
+	const currency = cart.currency && cart.currency.code ? cart.currency.code : 'USD'; // Ensure currency code is available, default to USD
+
+	// Ensure subtotal is a valid number before formatting
+	const formattedSubtotal = typeof subtotal === 'number' ? formatCurrency(subtotal, currency) : 'N/A';
 
 	return (
 		<div className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -155,6 +158,7 @@ export default function CartPage() {
 								</h2>
 								{item.sku && <p className="text-xs sm:text-sm text-gray-500">SKU: {item.sku}</p>}
 								<p className="text-xs sm:text-sm text-gray-600">Unit Price: {formatCurrency(item.sale_price, currency)}</p>
+								<p className="text-xs sm:text-sm text-gray-500 mt-1" id={`item-total-${item.id}`}>Item Total: {formatCurrency(item.sale_price * item.quantity, currency)}</p>
 							</div>
 						</div>
 
@@ -213,33 +217,30 @@ export default function CartPage() {
 				))}
 			</div>
 
-			<div className="mt-8 p-4 sm:p-6 border-t bg-gray-50 rounded-lg shadow">
-				<div className="flex justify-between items-center mb-2">
-					<p className="text-md sm:text-lg font-semibold text-gray-700">Subtotal ({totalItems} {totalItems === 1 ? 'item' : 'items'}):</p>
-					<p className="text-md sm:text-lg font-semibold text-gray-700">{formatCurrency(subtotal, currency)}</p>
+			<div className="mt-6 p-4 border-t bg-gray-50 rounded-lg shadow">
+				<h2 className="text-xl font-semibold text-gray-800 mb-4">Order Summary</h2>
+				<div className="space-y-2">
+					<div className="flex justify-between">
+						<span className="text-gray-600">Total Items:</span>
+						<span className="font-medium text-gray-700">{totalItems}</span>
+					</div>
+					<div className="flex justify-between">
+						<span className="text-gray-600">Subtotal:</span>
+						<span className="font-medium text-gray-700">{formattedSubtotal}</span>
+					</div>
+					{/* Add more summary lines like shipping, taxes if available */}
+					<div className="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t mt-2">
+						<span>Grand Total:</span>
+						<span>{formattedSubtotal}</span>{/* Assuming subtotal is grand total for now */}
+					</div>
 				</div>
-				{/* Placeholder for taxes and shipping if they become available */}
-				{/* <div className="flex justify-between items-center mb-1">
-					<p className="text-sm text-gray-600">Taxes:</p>
-					<p className="text-sm text-gray-600">{formatCurrency(cart.tax_total || 0, currency)}</p>
-				</div>
-				<div className="flex justify-between items-center mb-2">
-					<p className="text-sm text-gray-600">Shipping:</p>
-					<p className="text-sm text-gray-600">{cart.shipping_cost_total_inc_tax ? formatCurrency(cart.shipping_cost_total_inc_tax, currency) : 'Calculated at checkout'}</p>
-				</div> */}
-				<div className="flex justify-between items-center mt-4 pt-4 border-t">
-					<p className="text-lg sm:text-xl font-bold text-gray-800">Grand Total:</p>
-					<p className="text-lg sm:text-xl font-bold text-gray-800">{formatCurrency(cart.cart_amount_inc_tax, currency)}</p>
-				</div>
-				<div className="mt-6 text-right">
-					<Button
-						onClick={handleProceedToCheckout}
-						disabled={cartLoading || Object.keys(operationInProgress).length > 0 || totalItems === 0}
-						className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded text-sm sm:text-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-					>
-						Proceed to Checkout
-					</Button>
-				</div>
+				<Button
+					onClick={handleProceedToCheckout}
+					disabled={cartLoading || totalItems === 0 || (cart && !cart.redirect_urls?.checkout_url)}
+					className="w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+				>
+					Proceed to Checkout
+				</Button>
 			</div>
 		</div>
 	);

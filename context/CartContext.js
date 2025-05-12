@@ -163,29 +163,50 @@ export const CartProvider = ({ children }) => {
 			setError("Cart or item ID is missing.");
 			return;
 		}
+
+		if (isMutating) {
+			console.log("Mutation already in progress, skipping removeFromCart");
+			return;
+		}
+		setIsMutating(true);
 		setLoading(true);
 		setError(null);
+
 		try {
-			const updatedCart = await deleteBigCommerceCartItem(currentLocalCartId, itemId);
-			// deleteBigCommerceCartItem might return null if the cart becomes empty and is deleted.
-			// Or it might return the updated cart.
+			console.log(`Calling /api/cart/remove for cart: ${currentLocalCartId}, item: ${itemId}`);
+			const response = await fetch('/api/cart/remove', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ cartId: currentLocalCartId, itemId }),
+			});
+
+			const updatedCart = await response.json(); // This might be null if cart is deleted
+
+			if (!response.ok) {
+				console.error("Error response from /api/cart/remove:", updatedCart);
+				throw new Error(updatedCart.message || `Failed to remove item: ${response.statusText}`);
+			}
+
 			if (updatedCart && updatedCart.id) {
 				setCart(updatedCart);
-				setCartId(updatedCart.id); // Ensure cartId state is also updated
-				localStorage.setItem("bigCommerceCartId", updatedCart.id); // Persist cart_id
+				setCartId(updatedCart.id);
+				localStorage.setItem("bigCommerceCartId", updatedCart.id);
+				console.log("Item removed, cart updated via API:", updatedCart);
 			} else {
-				// If the cart was deleted (e.g. last item removed), clear local state
+				// If the cart was deleted (e.g. last item removed), or API returned null
 				setCart(null);
 				setCartId(null);
 				localStorage.removeItem("bigCommerceCartId");
+				console.log("Item removed, cart is now empty or deleted, updated via API.");
 			}
-			console.log("Item removed, cart updated:", updatedCart);
-			// No need to call internalRefreshCart here as the response should be the latest cart state
 		} catch (err) {
-			console.error("Error removing item from cart:", err);
+			console.error("Error in removeFromCart (calling /api/cart/remove):", err);
 			setError(err.message || "Failed to remove item.");
 		} finally {
 			setLoading(false);
+			setIsMutating(false);
 		}
 	};
 
@@ -197,38 +218,71 @@ export const CartProvider = ({ children }) => {
 			setError("Cart or item ID is missing.");
 			return;
 		}
-		if (quantity <= 0) {
-			return removeFromCart(itemId); // Delegate to removeFromCart if quantity is 0 or less
+
+		if (typeof quantity !== 'number' || quantity < 0) {
+			console.warn("updateQuantity called with invalid quantity:", quantity);
+			setError("Invalid quantity provided.");
+			return;
 		}
+
+		if (quantity === 0) {
+			return removeFromCart(itemId); // Delegate to removeFromCart if quantity is 0
+		}
+
+		// Find the item in the cart to get product_id and variant_id
+		let itemToUpdate;
+		if (cart && cart.line_items && cart.line_items.physical_items) {
+			itemToUpdate = cart.line_items.physical_items.find(item => item.id === itemId);
+		}
+
+		if (!itemToUpdate) {
+			console.error(`Item with ID ${itemId} not found in cart to update.`);
+			setError(`Item with ID ${itemId} not found in cart.`);
+			return;
+		}
+
+		const { product_id: productId, variant_id: variantId } = itemToUpdate;
+
+		if (isMutating) {
+			console.log("Mutation already in progress, skipping updateQuantity");
+			return;
+		}
+		setIsMutating(true);
 		setLoading(true);
 		setError(null);
-		try {
-			// The itemData for updateBigCommerceCartItem needs to be in the format: { line_item: { quantity: newQuantity, product_id: existingProductId, variant_id: existingVariantId (if any) } }
-			// However, the BigCommerce API for PUT /carts/{cartId}/items/{itemId} only requires { line_item: { quantity: newQuantity } }
-			// Or, more simply, just { "line_item": { "quantity": quantity } }
-			// Let's find the item in the current cart to get its product_id and variant_id if needed, though the API might not require it for a simple quantity update.
-			// The API docs suggest: body: { "line_item": { "quantity": 3 } } is sufficient.
 
-			const itemData = { line_item: { quantity } };
-			const updatedCart = await updateBigCommerceCartItem(currentLocalCartId, itemId, itemData);
+		try {
+			console.log(`Calling /api/cart/update for cart: ${currentLocalCartId}, item: ${itemId}, quantity: ${quantity}, productId: ${productId}, variantId: ${variantId}`);
+			const response = await fetch('/api/cart/update', {
+				method: 'POST', // Using POST as per our API route convention, though PUT might be more RESTful for an update
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ cartId: currentLocalCartId, itemId, quantity, productId, variantId }),
+			});
+
+			const updatedCart = await response.json();
+
+			if (!response.ok) {
+				console.error("Error response from /api/cart/update:", updatedCart);
+				throw new Error(updatedCart.message || `Failed to update quantity: ${response.statusText}`);
+			}
 
 			if (updatedCart && updatedCart.id) {
 				setCart(updatedCart);
-				setCartId(updatedCart.id); // Ensure cartId state is also updated
-				localStorage.setItem("bigCommerceCartId", updatedCart.id); // Persist cart_id
-				console.log("Quantity updated, cart refreshed:", updatedCart);
+				setCartId(updatedCart.id);
+				localStorage.setItem("bigCommerceCartId", updatedCart.id);
+				console.log("Quantity updated, cart updated via API:", updatedCart);
 			} else {
-				// This case should ideally not happen if the update was successful but returned no cart
-				// or if the update failed and an error was thrown.
-				console.warn("Cart update did not return a valid cart object.");
-				// Attempt a manual refresh as a fallback
-				await internalRefreshCart(currentLocalCartId);
+				console.error("Received unexpected cart data from /api/cart/update:", updatedCart);
+				throw new Error("Failed to process cart update from API after quantity change.");
 			}
 		} catch (err) {
-			console.error("Error updating item quantity:", err);
+			console.error("Error in updateQuantity (calling /api/cart/update):", err);
 			setError(err.message || "Failed to update quantity.");
 		} finally {
 			setLoading(false);
+			setIsMutating(false);
 		}
 	};
 
