@@ -14,6 +14,8 @@ export default async function CategoryPage({ params }) {
 	// Get products filtered by category
 	const products = await getProductsByCategory(slug);
 
+	console.log('Products:', products, slug);
+
 	if (!products || products.length === 0) {
 		notFound();
 	}

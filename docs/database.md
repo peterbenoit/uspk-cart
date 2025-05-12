@@ -2,16 +2,16 @@
 
 ## Table: `products`
 
--   **Columns:**
-    -   `id` (serial, primary key)
-    -   `name` (text, NOT NULL)
-    -   `category` (text, NULL)
-    -   `description` (text, NULL)
-    -   `price` (numeric(10,2), NOT NULL, DEFAULT 0.00)
-    -   `image_url` (text, NULL)
-    -   `stock` (integer, NULL, DEFAULT 0)
-    -   `created_at` (timestamp with time zone, DEFAULT timezone('utc', now()))
-    -   `updated_at` (timestamp with time zone, DEFAULT timezone('utc', now()))
+- **Columns:**
+    - `id` (serial, primary key)
+    - `name` (text, NOT NULL)
+    - `category` (text, NULL)
+    - `description` (text, NULL)
+    - `price` (numeric(10,2), NOT NULL, DEFAULT 0.00)
+    - `image_url` (text, NULL)
+    - `stock` (integer, NULL, DEFAULT 0)
+    - `created_at` (timestamp with time zone, DEFAULT timezone('utc', now()))
+    - `updated_at` (timestamp with time zone, DEFAULT timezone('utc', now()))
 
 ## Functions:
 
@@ -52,7 +52,16 @@
         returning *;
         ```
 
-5. **Function: `update_product`**
+5. **Function: `get_products_by_category`**
+
+    - **Arguments:** `cat text`
+    - **Return Type:** `SETOF products`
+    - **Definition:**
+        ```sql
+        select * from products where category = cat;
+        ```
+
+6. **Function: `update_product`**
 
     - **Arguments:** `pid integer, pname text, pcategory text, pdescription text, pprice numeric, pimage_url text, pstock integer`
     - **Return Type:** `SETOF products`
