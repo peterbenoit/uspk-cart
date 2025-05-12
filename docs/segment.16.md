@@ -1,33 +1,31 @@
-### Prompt Title: Fetch Live Products from BigCommerce
+# Segment 16: Update & Remove Cart Items
 
-Start integrating BigCommerce product data by replacing mock product logic with real data from the BigCommerce API.
+## Purpose
 
----
+Allow users to modify the quantity of items in their cart or remove items entirely, using BigCommerce’s Cart API.
 
-### 🧱 Requirements
+## Goals
 
-#### Product API Hookup
+- Provide quantity input controls in the cart view.
+- Allow item removal with a dedicated button or link.
+- Reflect changes in the cart total and local state.
 
--   In `lib/products.js`, update `getProductsByCategory(category)`:
+## Tasks
 
-    -   If `USE_MOCK_DATA` is `true`, return filtered `MOCK_PRODUCTS` as before
-    -   If `false`, make a GET request to:
-        ```
-        /catalog/products?include=custom_fields,images&is_visible=true
-        ```
-        using the configured BigCommerce API client
+- [ ] In the `/cart` page, add UI for adjusting quantity of each item.
+- [ ] Add “Remove” action for each cart item.
+- [ ] On quantity change, call `updateCartItem(cartId, itemId, quantity)`.
+- [ ] On removal, call `removeFromCart(cartId, itemId)`.
+- [ ] Update local state and re-render cart totals accordingly.
+- [ ] Handle edge cases like setting quantity to zero or invalid input.
 
--   Filter results client-side by category using `product.categories` if needed
+## Notes
 
-#### Usage in Category Page
+- Make sure updates are debounced or confirmed to avoid excessive API calls.
+- Show loading or disabled states during update/removal actions.
+- Prevent interaction if cart is invalid or expired.
 
--   In `app/category/[slug]/page.js`, keep using `getProductsByCategory(slug)`
--   No changes to the component output—just replace data at the source
+## Follow-ups
 
----
-
-### ✅ Success Criteria
-
--   When `USE_MOCK_DATA=false`, product data comes from BigCommerce
--   Products are filtered by category (match mock behavior)
--   App renders without error regardless of data source
+- Segment 17: Handle stale or expired cart scenarios gracefully.
+- Segment 18: Redirect to hosted checkout.

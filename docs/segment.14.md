@@ -1,39 +1,36 @@
-### Prompt Title: UI and Component Polish Pass
+# Segment 14: BigCommerce Cart API Integration
 
-Apply visual and structural refinements across the app for a more polished and consistent user interface.
+## Purpose
 
----
+Replace the client-only cart functionality with real-time, server-synced cart management via BigCommerce's Cart API.
 
-### 🧱 Requirements
+## Goals
 
-#### Component Reuse and Cleanup
+- Create a cart on BigCommerce if one doesn't exist.
+- Add items to the cart using BigCommerce’s API.
+- Store and persist the `cart_id` in localStorage.
+- Maintain compatibility with existing `useCart` interface.
 
--   Extract any duplicated form field elements (e.g., input groups, labeled fields) into small components like `components/FormField.js`
--   Create `components/Button.js` if you have repeated Tailwind button classes
+## Tasks
 
-#### Global Layout Improvements
+- [ ] Create utility functions for:
+    - `createCart(items)`
+    - `addToCart(cartId, items)`
+    - `getCart(cartId)`
+    - `removeFromCart(cartId, itemId)`
+    - `updateCartItem(cartId, itemId, quantity)`
+- [ ] Replace stubbed cart methods in `useCart` with real API calls.
+- [ ] On app load, check localStorage for existing `cart_id`. If present, fetch cart; otherwise, create a new one.
+- [ ] Handle errors when cart has expired (e.g., invalid `cart_id`).
+- [ ] Display total item count and subtotal via API.
 
--   Adjust spacing and padding for consistency across pages
--   Use a consistent heading size (`text-2xl font-semibold`, etc.)
--   Add `max-w-3xl mx-auto` containers where appropriate to constrain layout width
+## Notes
 
-#### Accessibility and UX
+- BigCommerce deletes carts after ~30 days of inactivity.
+- Error-handling should gracefully fall back to creating a new cart if the current one is expired or invalid.
+- Cart visibility (icon, badge) should reflect current state accurately.
 
--   Ensure all form inputs have associated `<label>` elements
--   Add `aria-label` attributes to nav links if needed
--   Use `focus:outline-none focus:ring` on inputs/buttons
+## Follow-ups
 
-#### Visual Detail
-
--   Use Tailwind colors and classes for better contrast and legibility
--   Ensure all pages have visible page-level headings
--   Optional: add a subtle hover effect to nav links and product rows
-
----
-
-### ✅ Success Criteria
-
--   Components look cleaner and are easier to maintain
--   Layouts feel consistent and responsive
--   Forms and UI elements are more accessible
--   All reusable UI patterns are moved to components
+- Segment 15: Display the cart and its items on a dedicated page.
+- Segment 16: Allow cart item updates and removal.

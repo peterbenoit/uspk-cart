@@ -1,42 +1,34 @@
-### Prompt Title: Create Mock Product API Layer for Inventory-less Testing
+# Segment 15: Cart View Page
 
-Set up a local, mock API simulation layer to support testing of pages without relying on real Supabase or BigCommerce inventory data.
+## Purpose
 
----
+Create a dedicated page to display the user's current cart contents, using data from the BigCommerce Cart API.
 
-### 🧱 Requirements
+## Goals
 
-#### Fallback Data Layer
+- Show all items in the user's current cart.
+- Provide key details: product name, quantity, price, subtotal.
+- Enable navigation to checkout from the cart page.
 
--   In `lib/products.js`, define a `USE_MOCK_DATA` flag:
+## Tasks
 
-    ```js
-    const USE_MOCK_DATA = true;
-    ```
+- [ ] Create a new page at `/cart`.
+- [ ] Retrieve cart contents using the stored `cart_id` and the BigCommerce API.
+- [ ] Display a list of products with:
+    - Product name
+    - Product image (if available)
+    - Unit price
+    - Quantity
+    - Item subtotal
+- [ ] Display cart total at the bottom.
+- [ ] Show “Go to Checkout” button linking to BigCommerce’s hosted checkout.
 
--   Conditionally export functions using either mock data or Supabase/BigCommerce:
+## Notes
 
-    ```js
-    export async function getProductsByCategory(category) {
-        if (USE_MOCK_DATA) return MOCK_PRODUCTS.filter((p) => p.category === category);
-        // Otherwise: fetch from Supabase or BigCommerce
-    }
-    ```
+- Cart data should come from `getCart(cartId)` created in Segment 14.
+- If cart is expired or not found, display a friendly error and prompt to return to products.
 
--   Define `MOCK_PRODUCTS` in the same file or import it
+## Follow-ups
 
-#### Add a Toggle Option (Optional)
-
--   In `.env.local.example`, document:
-    ```env
-    USE_MOCK_DATA=true
-    ```
--   In your app, use `process.env.USE_MOCK_DATA` to toggle sources
-
----
-
-### ✅ Success Criteria
-
--   The app builds and runs fully with mock data only
--   No Supabase or BigCommerce setup is required to test the UI
--   When `USE_MOCK_DATA` is `false`, real fetch logic becomes active
+- Segment 16: Enable quantity updates and item removal in the cart.
+- Segment 18: Implement the checkout redirection flow.

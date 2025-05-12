@@ -1,47 +1,33 @@
-### Prompt Title: Add Metadata and Not Found Handling
+# Segment 13: Basic Cart State (Client-side Only)
 
-Improve the app's SEO and user experience by defining route-level metadata and a global 404 page.
+## Purpose
 
----
+Enable cart functionality in the app without depending on BigCommerce. This segment will manage cart data locally using React Context or localStorage.
 
-### 🧱 Requirements
+## Goals
 
-#### Metadata
+- Create a central cart state accessible throughout the app.
+- Allow products to be added to, removed from, and updated within the cart.
+- Store cart in localStorage for session persistence.
 
--   For each of these routes, add a `metadata` export in their respective `page.js` files:
-    -   `/` → title: “Home – NextJS Commerce Template”
-    -   `/contact` → title: “Contact Us”
-    -   `/admin` → title: “Admin Dashboard”
-    -   `/category/[slug]` → dynamic title based on `params.slug`
-    -   `/product/[id]` → dynamic title based on product name (if available)
+## Tasks
 
-Example:
+- [ ] Create a `CartProvider` context to wrap the app.
+- [ ] Implement `useCart()` hook to expose cart manipulation methods:
+    - `addToCart(productId, quantity)`
+    - `removeFromCart(productId)`
+    - `updateQuantity(productId, quantity)`
+    - `clearCart()`
+- [ ] Initialize cart state from localStorage on load.
+- [ ] Store updates back into localStorage after changes.
+- [ ] Display total items in cart icon in the header.
 
-```js
-export const metadata = {
-    title: 'Contact Us',
-};
-```
+## Notes
 
--   Use a `generateMetadata()` function for `[slug]` and `[id]` routes
+- This is a temporary layer to simulate cart operations.
+- Will be replaced or abstracted in Segment 14 with BigCommerce integration.
 
-#### Not Found Page
+## Follow-ups
 
--   Create `app/not-found.js`
--   Render a simple custom 404 message:
-
-    ```jsx
-    export default function NotFound() {
-        return <h1 className="text-center mt-12 text-2xl">404 – Page Not Found</h1>;
-    }
-    ```
-
--   In `[slug]` and `[id]` routes, if no product/category is found, call `notFound()` from `next/navigation`
-
----
-
-### ✅ Success Criteria
-
--   Metadata titles render per page
--   Invalid product or category routes show the custom 404
--   SEO basics are in place without runtime errors
+- Segment 14: Replace local operations with BigCommerce Cart API.
+- Segment 15: Create cart view page and display items with quantity controls.
