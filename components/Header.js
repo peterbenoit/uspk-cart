@@ -135,7 +135,7 @@ export default function Header() {
 							</span>
 						)}
 					</Link>
-					{/* Mobile Menu Button - can be added here if needed */}
+					{/* Mobile Menu Button */}
 				</div>
 			</div>
 		</header>
