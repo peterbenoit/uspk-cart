@@ -4,6 +4,8 @@ import { useState } from 'react'; // Keep for operationInProgress
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '../../context/CartContext';
+import { useRouter } from 'next/navigation'; // Import useRouter
+import Button from '../../components/Button'; // Assuming a Button component exists
 
 export default function CartPage() {
 	const {
@@ -15,6 +17,7 @@ export default function CartPage() {
 		removeFromCart,
 	} = useCart();
 
+	const router = useRouter(); // Initialize useRouter
 	const [operationInProgress, setOperationInProgress] = useState({ itemId: null, type: null }); // type: 'quantity' or 'remove'
 
 	const handleUpdateQuantity = async (itemId, quantity) => {
@@ -48,6 +51,17 @@ export default function CartPage() {
 			// Optionally, set a user-facing error message here
 		} finally {
 			setOperationInProgress({ itemId: null, type: null });
+		}
+	};
+
+	const handleProceedToCheckout = () => {
+		if (cart && cart.checkout_url) {
+			router.push(cart.checkout_url);
+		} else {
+			// Handle the case where checkout_url is not available
+			// This could be an alert, a console log, or a more user-friendly message
+			console.error('Checkout URL not available.');
+			alert('Could not proceed to checkout. Please try again later.');
 		}
 	};
 
@@ -146,14 +160,16 @@ export default function CartPage() {
 						<p className="text-2xl font-bold text-gray-900">${cart.cart_amount.toFixed(2)}</p>
 					</div>
 					{cart.checkout_url && (
-						<a
-							href={cart.checkout_url}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="mt-6 w-full block text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 text-lg"
+						<Button
+							onClick={handleProceedToCheckout}
+							className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white"
+							disabled={cartLoading || !cart || !cart.checkout_url}
 						>
 							Proceed to Checkout
-						</a>
+						</Button>
+					)}
+					{!cart?.checkout_url && !cartLoading && (
+						<p className="text-xs text-red-500 mt-2">Checkout is currently unavailable. Please try refreshing.</p>
 					)}
 				</div>
 			</div>
