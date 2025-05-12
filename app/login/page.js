@@ -2,104 +2,107 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
-import FormField from '@/components/FormField'; // Added import
-import Button from '@/components/Button'; // Added import
+import FormField from '@/components/FormField';
+import Button from '@/components/Button';
+import Link from 'next/link'; // Added for navigation
 
 export default function LoginPage() {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
-	const [loading, setLoading] = useState(true); // Start with loading
+	const [isLoading, setIsLoading] = useState(false); // Changed initial state to false, true was for initial session check
 	const [error, setError] = useState(null);
 	const router = useRouter();
 
-	// Check if user is already logged in
+	// Placeholder for checking if user is already logged in
+	// This will be more robust once session management is fully in place
 	useEffect(() => {
-		async function checkSession() {
-			const { data: { session } } = await supabase.auth.getSession();
-
-			console.log('Session: ' + JSON.stringify(session));
-
-			if (session) {
-				// User is already logged in, redirect to admin
-				router.replace('/admin');
-			} else {
-				// Not logged in, show the login form
-				setLoading(false);
-			}
-		}
-
-		checkSession();
+		// Example: Check for a session token (implementation detail for later)
+		// const sessionToken = localStorage.getItem('sessionToken');
+		// if (sessionToken) {
+		//   router.push('/account'); // Redirect to account page if logged in
+		// }
+		// For now, just ensure loading is false if no initial check is performed.
+		// If there was an initial check, it would set isLoading to false.
+		// Since we are not doing an initial check yet, we can remove the initial true state for isLoading.
 	}, [router]);
 
 	const handleLogin = async (e) => {
 		e.preventDefault();
-		setLoading(true);
+		setIsLoading(true);
 		setError(null);
 
 		try {
-			// Using password-based auth (you can switch to OTP if preferred)
-			const { error } = await supabase.auth.signInWithPassword({
-				email,
-				password,
+			const response = await fetch('/api/auth/login', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ email, password }),
 			});
 
-			if (error) throw error;
+			const data = await response.json();
 
-			// Redirect to admin page on successful login
-			router.replace('/admin');
-		} catch (error) {
-			setError(error.message);
+			if (!response.ok) {
+				throw new Error(data.message || 'Login failed');
+			}
+
+			// Assuming the API returns a success message or user data
+			// And sets a session cookie httpOnly
+
+			// Redirect to account page or home page after successful login
+			router.push('/account'); // Or '/' or a dedicated dashboard
+
+		} catch (err) {
+			setError(err.message);
 		} finally {
-			setLoading(false);
+			setIsLoading(false);
 		}
 	};
 
-	if (loading) {
-		return (
-			<div className="flex justify-center items-center h-[50vh]">
-				<div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-			</div>
-		);
-	}
-
 	return (
-		<div className="flex min-h-[70vh] flex-col items-center justify-center px-4">
-			<div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow-md">
-				<div>
-					<h1 className="text-2xl font-semibold text-center">Admin Login</h1>
-					{error && (
-						<div className="bg-red-100 text-red-600 p-3 rounded-md mt-4 text-sm">
-							{error}
-						</div>
-					)}
-				</div>
-
-				<form className="space-y-6" onSubmit={handleLogin}>
+		<div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+			<div className="max-w-md mx-auto">
+				<h1 className="text-3xl font-bold text-center text-gray-900 mb-8">
+					Login to Your Account
+				</h1>
+				<form onSubmit={handleLogin} className="space-y-6">
 					<FormField
-						label="Email"
-						id="email"
+						label="Email Address"
 						type="email"
-						required
+						id="email"
+						name="email"
 						value={email}
 						onChange={(e) => setEmail(e.target.value)}
+						required
 						placeholder="you@example.com"
 					/>
 					<FormField
 						label="Password"
-						id="password"
 						type="password"
-						required
+						id="password"
+						name="password"
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
+						required
 						placeholder="••••••••"
 					/>
+					{error && (
+						<p className="text-sm text-red-600" role="alert">
+							{error}
+						</p>
+					)}
 					<div>
-						<Button type="submit" className="w-full" disabled={loading}>
-							{loading ? 'Logging in...' : 'Login'}
+						<Button type="submit" disabled={isLoading} fullWidth>
+							{isLoading ? 'Logging in...' : 'Login'}
 						</Button>
 					</div>
 				</form>
+				<p className="mt-6 text-center text-sm text-gray-600">
+					Don&apos;t have an account?{' '}
+					<Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
+						Sign up
+					</Link>
+				</p>
 			</div>
 		</div>
 	);

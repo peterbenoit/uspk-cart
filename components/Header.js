@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { Search, Cart3, ChevronDown } from 'react-bootstrap-icons';
+import { Search, Cart3, ChevronDown, PersonCircle } from 'react-bootstrap-icons'; // Added PersonCircle
 import { useCart } from "@/context/CartContext"; // Import useCart
+import { useAuth } from "@/context/AuthContext"; // Import useAuth
 
 export default function Header() {
 	const [isShopOpen, setIsShopOpen] = useState(false);
 	const shopRef = useRef(null);
-	const { getCartTotalItems } = useCart(); // Get cart total items
+	const { getCartTotalItems } = useCart();
 	const totalItems = getCartTotalItems();
+	const { currentUser, isAuthenticated, logout } = useAuth(); // Get auth state and functions
 
 	const toggleShopDropdown = () => {
 		setIsShopOpen(!isShopOpen);
@@ -122,7 +124,7 @@ export default function Header() {
 					<Link href="/contact" className={navLinkClasses} aria-label="Contact Us">Contact</Link>
 				</nav>
 
-				{/* Icons */}
+				{/* Icons & Auth */}
 				<div className="flex items-center space-x-4">
 					<button className="text-gray-600 hover:text-indigo-600 transition-colors" aria-label="Search">
 						<Search size={22} />
@@ -135,7 +137,29 @@ export default function Header() {
 							</span>
 						)}
 					</Link>
-					{/* Mobile Menu Button */}
+
+					{/* Auth Section */}
+					{isAuthenticated && currentUser ? (
+						<div className="flex items-center space-x-2">
+							<span className="text-sm text-gray-700">Welcome, {currentUser.email}!</span> {/* Adjust if you have a name field */}
+							<button
+								onClick={logout}
+								className="text-gray-600 hover:text-indigo-600 transition-colors text-sm font-medium"
+								aria-label="Logout"
+							>
+								Logout
+							</button>
+						</div>
+					) : (
+						<Link href="/login" className={`${navLinkClasses} flex items-center`} aria-label="Login">
+							<PersonCircle size={22} className="mr-1" />
+							Login
+						</Link>
+					)}
+					{/* Mobile Menu Button Placeholder - to be implemented later if needed */}
+					{/* <button className="md:hidden text-gray-600 hover:text-indigo-600 transition-colors" aria-label="Open menu">
+						<List size={28} />
+					</button> */}
 				</div>
 			</div>
 		</header>

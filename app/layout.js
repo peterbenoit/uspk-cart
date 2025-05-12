@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { CartProvider } from "@/context/CartContext"; // Import CartProvider
+import { AuthProvider } from "@/context/AuthContext"; // Import AuthProvider
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -26,13 +27,15 @@ export default function RootLayout({ children }) {
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-800 flex flex-col min-h-screen`}
 			>
-				<CartProvider> {/* Wrap with CartProvider */}
-					<Header />
-					<main className="container mx-auto p-4 sm:p-6 lg:p-8 flex-grow">
-						{children}
-					</main>
-					<Footer />
-				</CartProvider> {/* Close CartProvider */}
+				<AuthProvider> {/* Wrap with AuthProvider */}
+					<CartProvider> {/* Wrap with CartProvider */}
+						<Header />
+						<main className="container mx-auto p-4 sm:p-6 lg:p-8 flex-grow">
+							{children}
+						</main>
+						<Footer />
+					</CartProvider> {/* Close CartProvider */}
+				</AuthProvider> {/* Close AuthProvider */}
 			</body>
 		</html>
 	);
