@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '../../context/CartContext';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image'; // Add Image import
 
 export default function CartPage() {
 	const {
@@ -150,7 +151,7 @@ export default function CartPage() {
 		return (
 			<div className="container mx-auto px-4 py-8 text-center">
 				<h1 className="text-2xl font-semibold mb-4">Your Cart is Empty</h1>
-				<p className="mb-4">Looks like you haven't added anything to your cart yet.</p>
+				<p className="mb-4">Looks like you haven&apos;t added anything to your cart yet.</p> {/* Fixed apostrophe */}
 				<button
 					onClick={() => router.push('/')}
 					className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
@@ -192,7 +193,16 @@ export default function CartPage() {
 				<div className="md:col-span-2">
 					{physical_items.map((item) => (
 						<div key={item.id} className="flex items-center border-b py-4">
-							<img src={item.image_url || '/images/default.jpg'} alt={item.name} className="w-20 h-20 object-cover rounded mr-4" />
+							<div className="w-20 h-20 relative mr-4">
+								<Image
+									src={item.image_url || '/images/default.jpg'}
+									alt={item.name}
+									fill
+									sizes="80px"
+									style={{ objectFit: 'cover' }}
+									className="rounded"
+								/>
+							</div>
 							<div className="flex-grow">
 								<h2 className="text-lg font-semibold">{item.name}</h2>
 								<p className="text-sm text-gray-600">SKU: {item.sku || 'N/A'}</p>

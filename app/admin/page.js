@@ -51,7 +51,7 @@ export default function AdminPage() {
 		}
 
 		checkSessionAndLoadProducts();
-	}, []);
+	}, [router]);
 
 	const handleEditClick = (product) => {
 		setEditingId(product.id);
